@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "467878544533",
+    "project_id": "ai-smart-life-assistant-a697a",
+    "storage_bucket": "ai-smart-life-assistant-a697a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:467878544533:android:08ede33cbff1e7ef81079c",
+        "android_client_info": {
+          "package_name": "com.chaxu.ai_smart_life_assistant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXO6iaXla7ZNLj3-lff6DnD8ollrishHs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

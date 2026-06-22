@@ -12,7 +12,20 @@
           "package_name": "com.chaxu.ai_smart_life_assistant"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "467878544533-3kcjduqcor1cdqec0aug9325kc0lkggn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chaxu.ai_smart_life_assistant",
+            "certificate_hash": "f9b954f761449b6e09f41f1647f87af2974d01ac"
+          }
+        },
+        {
+          "client_id": "467878544533-lg8bicvel81519gcvmuq0b0mn2ak4u6d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBXO6iaXla7ZNLj3-lff6DnD8ollrishHs"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "467878544533-lg8bicvel81519gcvmuq0b0mn2ak4u6d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "467878544533-3j6c7rl91gfdq791lfgc06ln0g20rc8d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.chaxu.aiSmartLifeAssistant"
+              }
+            }
+          ]
         }
       }
     }

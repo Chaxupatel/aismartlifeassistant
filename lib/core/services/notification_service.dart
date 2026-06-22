@@ -147,11 +147,15 @@ class NotificationService {
     if (reminder.enableAlarm) {
       final box = Hive.box('settings_box');
       final volume = box.get('alarmVolume', defaultValue: 0.8) as double;
+      final ringtone = box.get('alarmRingtone', defaultValue: 'Default') as String;
+      
+      final fileName = ringtone.toLowerCase();
+      final audioPath = fileName == 'default' ? 'assets/audio/alarm.wav' : 'assets/audio/$fileName.wav';
       
       final alarmSettings = AlarmSettings(
         id: id,
         dateTime: reminder.dateTime,
-        assetAudioPath: 'assets/audio/alarm.wav',
+        assetAudioPath: audioPath,
         loopAudio: true,
         vibrate: true,
         volumeSettings: VolumeSettings.fade(

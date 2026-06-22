@@ -76,16 +76,19 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
   Future<void> signInWithGoogle({
     required void Function() onSuccess,
     required void Function(String error) onFailure,
+    void Function()? onCancel,
+    bool isLogin = true,
   }) async {
     state = const AsyncValue.loading();
     try {
-      final user = await _repository.signInWithGoogle();
+      final user = await _repository.signInWithGoogle(isLogin: isLogin);
       if (user != null) {
         state = AsyncValue.data(user);
         onSuccess();
       } else {
         // User cancelled the sign-in flow — silently reset state
         state = AsyncValue.data(_repository.currentUser);
+        if (onCancel != null) onCancel();
       }
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);

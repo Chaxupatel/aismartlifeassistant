@@ -100,10 +100,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Filter reminders by selected date
     final filteredReminders = reminders.where((r) {
-      return r.dateTime.year == selectedDate.year &&
+      final isSameDay = r.dateTime.year == selectedDate.year &&
           r.dateTime.month == selectedDate.month &&
           r.dateTime.day == selectedDate.day;
-    }).toList();
+          
+      if (!isSameDay) return false;
+      
+      // If selected date is today, hide reminders that have already passed
+      final isToday = selectedDate.year == DateTime.now().year &&
+          selectedDate.month == DateTime.now().month &&
+          selectedDate.day == DateTime.now().day;
+          
+      if (isToday) {
+        return r.dateTime.isAfter(DateTime.now());
+      }
+      
+      return true;
+    }).toList()..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     // Filter upcoming reminders (strictly after selected date)
     final upcomingReminders = reminders.where((r) {

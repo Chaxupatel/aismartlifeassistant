@@ -476,6 +476,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                   );
                                 }
                               },
+                              onCancel: () {
+                                if (mounted) {
+                                  setState(() => _isGoogleLoading = false);
+                                }
+                              },
                             );
                           },
                   ),

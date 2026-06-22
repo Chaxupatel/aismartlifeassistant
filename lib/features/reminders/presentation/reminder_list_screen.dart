@@ -17,6 +17,37 @@ class ReminderListScreen extends ConsumerStatefulWidget {
 
 class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
   String _searchQuery = '';
+  final Set<String> _selectedIds = {};
+  bool _isSelectionMode = false;
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+        if (_selectedIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _deleteSelected() {
+    if (_selectedIds.isNotEmpty) {
+      ref.read(remindersProvider.notifier).deleteMultipleReminders(_selectedIds.toList());
+      setState(() {
+        _selectedIds.clear();
+        _isSelectionMode = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selected reminders deleted'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,24 +83,36 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                 ),
                 Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.auto_awesome,
-                        color: AppColors.primary,
-                        size: 24,
+                    if (_isSelectionMode)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete_sweep_rounded,
+                          color: AppColors.error,
+                          size: 28,
+                        ),
+                        onPressed: _deleteSelected,
+                        tooltip: 'Delete Selected',
+                      )
+                    else ...[
+                      IconButton(
+                        icon: const Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
+                        onPressed: () => context.push('/ai-reminder-creation'),
+                        tooltip: 'Create with AI',
                       ),
-                      onPressed: () => context.push('/ai-reminder-creation'),
-                      tooltip: 'Create with AI',
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.add_circle_outline_rounded,
-                        color: AppColors.primary,
-                        size: 28,
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.add_circle_outline_rounded,
+                          color: AppColors.primary,
+                          size: 28,
+                        ),
+                        onPressed: () => context.push('/reminders/add'),
                       ),
-                      onPressed: () => context.push('/reminders/add'),
-                    ),
+                    ],
                   ],
                 ),
               ],
@@ -141,32 +184,61 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                     itemCount: filteredReminders.length,
                     itemBuilder: (context, index) {
                       final reminder = filteredReminders[index];
+                      final isSelected = _selectedIds.contains(reminder.id);
                       
                       return GestureDetector(
-                        onTap: () => context.push('/reminders/${reminder.id}'),
+                        onLongPress: () {
+                          if (!_isSelectionMode) {
+                            setState(() {
+                              _isSelectionMode = true;
+                              _selectedIds.add(reminder.id);
+                            });
+                          }
+                        },
+                        onTap: () {
+                          if (_isSelectionMode) {
+                            _toggleSelection(reminder.id);
+                          } else {
+                            context.push('/reminders/${reminder.id}');
+                          }
+                        },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: AppSizes.m),
                           child: GlassContainer(
                             blur: 15,
                             opacity: isDark ? 0.06 : 0.1,
-                            color: isDark ? Colors.black : Colors.white,
-                            borderColor: isDark ? Colors.white10 : Colors.black12,
+                            color: isSelected 
+                                ? AppColors.primary.withValues(alpha: 0.15)
+                                : (isDark ? Colors.black : Colors.white),
+                            borderColor: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.5)
+                                : (isDark ? Colors.white10 : Colors.black12),
                             padding: const EdgeInsets.all(AppSizes.m),
                             child: Row(
                               children: [
-                                InkWell(
-                                  onTap: () {
-                                    ref.read(remindersProvider.notifier).toggleReminder(reminder.id);
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Icon(
-                                    reminder.isCompleted
-                                        ? Icons.check_circle_rounded
-                                        : Icons.radio_button_off_rounded,
-                                    color: reminder.isCompleted ? AppColors.success : AppColors.primary,
+                                if (_isSelectionMode)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: AppSizes.m),
+                                    child: Icon(
+                                      isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                                      color: isSelected ? AppColors.primary : (isDark ? Colors.white38 : Colors.black38),
+                                    ),
+                                  )
+                                else
+                                  InkWell(
+                                    onTap: () {
+                                      ref.read(remindersProvider.notifier).toggleReminder(reminder.id);
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Icon(
+                                      reminder.isCompleted
+                                          ? Icons.check_circle_rounded
+                                          : Icons.radio_button_off_rounded,
+                                      color: reminder.isCompleted ? AppColors.success : AppColors.primary,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: AppSizes.m),
+                                if (!_isSelectionMode)
+                                  const SizedBox(width: AppSizes.m),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,

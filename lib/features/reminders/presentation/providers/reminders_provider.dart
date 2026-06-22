@@ -51,6 +51,14 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
   }
 
   void toggleReminder(String id) {
+    final target = state.firstWhere((r) => r.id == id, orElse: () => state.first);
+    
+    // Auto-remove completed 'One Time' reminders
+    if (!target.isCompleted && target.repeatType == 'One Time') {
+      deleteReminder(id);
+      return;
+    }
+
     state = [
       for (final r in state)
         if (r.id == id)
@@ -58,6 +66,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
         else
           r
     ];
+    
     // Find and persist the updated reminder
     final updated = state.firstWhere((r) => r.id == id);
     _repository.addReminder(updated);
@@ -84,6 +93,14 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     state = state.where((r) => r.id != id).toList();
     _repository.deleteReminder(id);
     _notificationService.cancelNotification(id);
+  }
+
+  void deleteMultipleReminders(List<String> ids) {
+    state = state.where((r) => !ids.contains(r.id)).toList();
+    for (final id in ids) {
+      _repository.deleteReminder(id);
+      _notificationService.cancelNotification(id);
+    }
   }
 }
 

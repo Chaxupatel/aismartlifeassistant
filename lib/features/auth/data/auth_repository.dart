@@ -8,7 +8,7 @@ abstract class AuthRepository {
   Future<User?> signInWithEmailAndPassword(String email, String password);
   Future<User?> signUpWithEmailAndPassword(String email, String name, String password);
   Future<void> sendPasswordResetEmail(String email);
-  Future<User?> signInWithGoogle();
+  Future<User?> signInWithGoogle({bool isLogin = true});
   Future<void> updateDisplayName(String name);
   Future<void> reauthenticateAndChangePassword(String currentPassword, String newPassword);
   Future<void> updatePassword(String newPassword);
@@ -68,13 +68,28 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<User?> signInWithGoogle() async {
+  Future<User?> signInWithGoogle({bool isLogin = true}) async {
     try {
       // Trigger the Google account picker
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       // User cancelled the sign-in flow
       if (googleUser == null) return null;
+
+      // Enforce Login vs Signup logic
+      final signInMethods = await _firebaseAuth.fetchSignInMethodsForEmail(googleUser.email);
+      
+      if (isLogin && signInMethods.isEmpty) {
+        // Log out of google sign in so they aren't stuck on the cached account if they try again
+        await _googleSignIn.signOut();
+        throw Exception('No account found with this Google email. Please sign up first.');
+      }
+      
+      if (!isLogin && signInMethods.isNotEmpty) {
+        // We're signing up, but they already exist
+        await _googleSignIn.signOut();
+        throw Exception('An account already exists with this Google email. Please log in instead.');
+      }
 
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;

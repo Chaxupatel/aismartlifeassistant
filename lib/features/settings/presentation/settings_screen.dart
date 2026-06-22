@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -22,7 +23,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _lastBackupDate = 'Never';
 
   final List<String> _notificationTones = ['Gentle Chime', 'Standard Ping', 'Silent'];
-  final List<String> _alarmRingtones = ['Calm Wake', 'Siren Alert', 'Classic Clock', 'High Energy'];
+  final List<String> _alarmRingtones = ['Default', 'Classic', 'Digital', 'Crystal'];
+  
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void _playPreview(String name) async {
+    final fileName = name.toLowerCase();
+    final path = fileName == 'default' ? 'audio/alarm.wav' : 'audio/$fileName.wav';
+    await _audioPlayer.stop();
+    await _audioPlayer.play(AssetSource(path));
+  }
 
   // --- ACTIONS ---
 
@@ -358,6 +374,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             onChanged: (val) {
                               if (val != null) {
                                 settingsNotifier.updateNotificationTone(val);
+                                _playPreview(val);
                               }
                             },
                           ),
@@ -419,6 +436,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onChanged: (val) {
                             if (val != null) {
                               settingsNotifier.updateAlarmRingtone(val);
+                              _playPreview(val);
                             }
                           },
                         ),

@@ -36,6 +36,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
 
   late TabController _tabController;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   @override
   void initState() {
@@ -508,6 +509,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                   // Google button
                   _buildSocialButton(
                     isDark,
+                    isLoading: _isGoogleLoading,
                     icon: Text(
                       'G',
                       style: TextStyle(
@@ -516,11 +518,37 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                         color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Google OAuth Sign-Up Triggered (Placeholder)')),
-                      );
-                    },
+                    onTap: _isGoogleLoading
+                        ? null
+                        : () {
+                            setState(() => _isGoogleLoading = true);
+                            ref.read(authNotifierProvider.notifier).signInWithGoogle(
+                              onSuccess: () {
+                                if (mounted) {
+                                  setState(() => _isGoogleLoading = false);
+                                  context.go('/home');
+                                }
+                              },
+                              onFailure: (error) {
+                                if (mounted) {
+                                  setState(() => _isGoogleLoading = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(error),
+                                      backgroundColor: AppColors.error,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
+                              onCancel: () {
+                                if (mounted) {
+                                  setState(() => _isGoogleLoading = false);
+                                }
+                              },
+                              isLogin: false,
+                            );
+                          },
                   ),
                   const SizedBox(width: AppSizes.m),
                   // Apple button
@@ -533,7 +561,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                     ),
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Apple OAuth Sign-Up Triggered (Placeholder)')),
+                        const SnackBar(
+                          content: Text('Apple OAuth Sign-Up Triggered (Placeholder)'),
+                          backgroundColor: AppColors.primary,
+                          behavior: SnackBarBehavior.floating,
+                        ),
                       );
                     },
                   ),
@@ -576,7 +608,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
   Widget _buildSocialButton(
     bool isDark, {
     required Widget icon,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
+    bool isLoading = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -590,7 +623,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
         borderColor: isDark ? Colors.white10 : Colors.black12,
         padding: EdgeInsets.zero,
         child: Center(
-          child: icon,
+          child: isLoading
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                )
+              : icon,
         ),
       ),
     );

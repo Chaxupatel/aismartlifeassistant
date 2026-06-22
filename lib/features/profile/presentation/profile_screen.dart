@@ -24,6 +24,7 @@ class ProfileScreen extends ConsumerWidget {
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    String? authErrorMessage;
 
     showDialog(
       context: context,
@@ -32,7 +33,10 @@ class ProfileScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final authState = ref.watch(authNotifierProvider);
+            final user = authState.value;
             final isLoading = authState.isLoading;
+            
+            final hasPasswordProvider = user?.providerData.any((p) => p.providerId == 'password') ?? false;
 
             return Dialog(
               backgroundColor: Colors.transparent,
@@ -84,80 +88,120 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(height: AppSizes.l),
 
                         // ── Change Password ───────────────────────────────
-                        Text(
-                          'Change Password',
-                          style: TextStyle(
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        CustomTextField(
-                          controller: currentPasswordController,
-                          labelText: 'Current Password',
-                          prefixIcon: Icons.lock_outline_rounded,
-                          obscureText: true,
-                          validator: (value) {
-                            // Only required when a new password is being set
-                            if (newPasswordController.text.isNotEmpty &&
-                                (value == null || value.isEmpty)) {
-                              return 'Enter your current password to change it';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.s),
-                        CustomTextField(
-                          controller: newPasswordController,
-                          labelText: 'New Password',
-                          prefixIcon: Icons.lock_reset_rounded,
-                          obscureText: true,
-                          validator: (value) {
-                            if (value != null && value.isNotEmpty && value.length < 6) {
-                              return 'New password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.s),
-                        CustomTextField(
-                          controller: confirmPasswordController,
-                          labelText: 'Confirm New Password',
-                          prefixIcon: Icons.lock_rounded,
-                          obscureText: true,
-                          validator: (value) {
-                            if (newPasswordController.text.isNotEmpty &&
-                                value != newPasswordController.text) {
-                              return 'Passwords do not match';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        // Forgot Password link
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              GoRouter.of(context).push('/forgot-password');
-                            },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        if (hasPasswordProvider) ...[
+                          Text(
+                            'Change Password',
+                            style: TextStyle(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
-                            child: const Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                          ),
+                          const SizedBox(height: 6),
+                          CustomTextField(
+                            controller: currentPasswordController,
+                            labelText: 'Current Password',
+                            prefixIcon: Icons.lock_outline_rounded,
+                            obscureText: true,
+                            validator: (value) {
+                              // Only required when a new password is being set
+                              if (newPasswordController.text.isNotEmpty &&
+                                  (value == null || value.isEmpty)) {
+                                return 'Enter your current password to change it';
+                              }
+                            },
+                          ),
+                          if (authErrorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, top: 4),
+                              child: Text(
+                                authErrorMessage!,
+                                style: const TextStyle(
+                                  color: AppColors.error,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: AppSizes.s),
+                          CustomTextField(
+                            controller: newPasswordController,
+                            labelText: 'New Password',
+                            prefixIcon: Icons.lock_reset_rounded,
+                            obscureText: true,
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty && value.length < 6) {
+                                return 'New password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.s),
+                          CustomTextField(
+                            controller: confirmPasswordController,
+                            labelText: 'Confirm New Password',
+                            prefixIcon: Icons.lock_rounded,
+                            obscureText: true,
+                            validator: (value) {
+                              if (newPasswordController.text.isNotEmpty &&
+                                  value != newPasswordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          // Forgot Password link
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                GoRouter.of(context).push('/forgot-password');
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ] else ...[
+                          Container(
+                            padding: const EdgeInsets.all(AppSizes.m),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.security_rounded,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: AppSizes.s),
+                                Expanded(
+                                  child: Text(
+                                    'You are signed in securely via Google. Password changes are managed by your Google account.',
+                                    style: TextStyle(
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
 
                         const SizedBox(height: AppSizes.m),
                         Row(
@@ -190,15 +234,18 @@ class ProfileScreen extends ConsumerWidget {
                                                 onSuccess: () {},
                                                 onFailure: (err) {
                                                   hasError = true;
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content: Text(err), backgroundColor: AppColors.error),
-                                                  );
+                                                  setDialogState(() {
+                                                    authErrorMessage = err;
+                                                  });
                                                 },
                                               );
                                         }
 
                                         // 2. Reauthenticate + change password if new password entered
                                         if (newPw.isNotEmpty && !hasError) {
+                                          setDialogState(() {
+                                            authErrorMessage = null;
+                                          });
                                           // Reauthenticate with current password first
                                           await ref.read(authNotifierProvider.notifier).reauthenticateAndChangePassword(
                                                 currentPassword: currentPw,
@@ -216,9 +263,9 @@ class ProfileScreen extends ConsumerWidget {
                                                 onFailure: (err) {
                                                   hasError = true;
                                                   if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text(err), backgroundColor: AppColors.error),
-                                                    );
+                                                    setDialogState(() {
+                                                      authErrorMessage = err;
+                                                    });
                                                   }
                                                 },
                                               );

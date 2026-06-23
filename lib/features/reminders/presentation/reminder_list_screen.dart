@@ -63,9 +63,11 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
     }).toList();
 
     return GradientBackground(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // Header Actions
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.s),
@@ -81,40 +83,16 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                     letterSpacing: -0.5,
                   ),
                 ),
-                Row(
-                  children: [
-                    if (_isSelectionMode)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.delete_sweep_rounded,
-                          color: AppColors.error,
-                          size: 28,
-                        ),
-                        onPressed: _deleteSelected,
-                        tooltip: 'Delete Selected',
-                      )
-                    else ...[
-                      IconButton(
-                        icon: const Icon(
-                          Icons.auto_awesome,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
-                        onPressed: () => context.push('/ai-reminder-creation'),
-                        tooltip: 'Create with AI',
-                      ),
-                      const SizedBox(width: 4),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.add_circle_outline_rounded,
-                          color: AppColors.primary,
-                          size: 28,
-                        ),
-                        onPressed: () => context.push('/reminders/add'),
-                      ),
-                    ],
-                  ],
-                ),
+                if (_isSelectionMode)
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_sweep_rounded,
+                      color: AppColors.error,
+                      size: 28,
+                    ),
+                    onPressed: _deleteSelected,
+                    tooltip: 'Delete Selected',
+                  ),
               ],
             ),
           ),
@@ -325,6 +303,66 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                     },
                   ),
           ),
+        ],
+      ),
+          
+      // Floating Action Buttons (Above bottom navigation bar)
+      if (!_isSelectionMode)
+            Positioned(
+              left: AppSizes.m,
+              right: AppSizes.m,
+              bottom: 50, // Pushed further down
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // AI Button
+                  GestureDetector(
+                    onTap: () => context.push('/ai-reminder-creation'),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppColors.accentGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.accent.withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                      ),
+                    ),
+                  ),
+                  
+                  // Add Button
+                  GestureDetector(
+                    onTap: () => context.push('/reminders/add'),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppColors.primaryGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.add_rounded, color: Colors.white, size: 32),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

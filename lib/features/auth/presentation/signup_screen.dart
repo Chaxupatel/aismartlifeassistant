@@ -9,6 +9,7 @@ import '../../../core/widgets/custom_textfield.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/gradient_background.dart';
+import '../../../core/widgets/custom_snackbar.dart';
 import 'providers/auth_provider.dart';
 
 /// Upgraded Signup Screen allowing registration via Email or Mobile number.
@@ -37,6 +38,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
   late TabController _tabController;
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
 
   @override
   void initState() {
@@ -81,12 +83,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
         },
         onFailure: (error) {
           if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(error), backgroundColor: AppColors.error),
-            );
+            setState(() => _isLoading = false);
+            CustomSnackBar.showError(context, error);
           }
         },
       );
@@ -117,12 +115,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
             }
           } catch (e) {
             if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Phone registration failed: $e'), backgroundColor: AppColors.error),
-              );
+              setState(() => _isLoading = false);
+              CustomSnackBar.showError(context, 'Phone registration failed: $e');
             }
           }
         },
@@ -131,9 +125,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
             setState(() {
               _isLoading = false;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(e.message ?? 'Phone registration failed'), backgroundColor: AppColors.error),
-            );
+            CustomSnackBar.showError(context, e.message ?? 'Phone registration failed');
           }
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -220,15 +212,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                               Navigator.of(context).pop();
                               context.go('/home');
                             }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Invalid OTP Code: $e'), backgroundColor: AppColors.error),
-                            );
+                          } on FirebaseAuthException catch (e) {
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                              CustomSnackBar.showError(context, 'Invalid OTP Code: ${e.message}');
+                            }
                           }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter a 6-digit code'), backgroundColor: AppColors.error),
-                          );
+                          CustomSnackBar.showError(context, 'Please enter a 6-digit code');
                         }
                       },
                       child: const Text('Verify', style: TextStyle(color: Colors.white)),
@@ -532,13 +523,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                               onFailure: (error) {
                                 if (mounted) {
                                   setState(() => _isGoogleLoading = false);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(error),
-                                      backgroundColor: AppColors.error,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  CustomSnackBar.showError(context, error);
                                 }
                               },
                               onCancel: () {
@@ -554,20 +539,36 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                   // Apple button
                   _buildSocialButton(
                     isDark,
+                    isLoading: _isAppleLoading,
                     icon: Icon(
                       Icons.apple_rounded,
                       size: 26,
                       color: isDark ? Colors.white : Colors.black,
                     ),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Apple OAuth Sign-Up Triggered (Placeholder)'),
-                          backgroundColor: AppColors.primary,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
+                    onTap: _isAppleLoading || _isGoogleLoading
+                        ? null
+                        : () async {
+                            setState(() => _isAppleLoading = true);
+                            await ref.read(authNotifierProvider.notifier).signInWithApple(
+                              onSuccess: () {
+                                if (mounted) {
+                                  context.go('/home');
+                                }
+                              },
+                              onFailure: (error) {
+                                if (mounted) {
+                                  setState(() => _isAppleLoading = false);
+                                  CustomSnackBar.showError(context, error);
+                                }
+                              },
+                              onCancel: () {
+                                if (mounted) {
+                                  setState(() => _isAppleLoading = false);
+                                }
+                              },
+                              isLogin: false,
+                            );
+                          },
                   ),
                 ],
               ),

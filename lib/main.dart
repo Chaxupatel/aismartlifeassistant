@@ -7,13 +7,17 @@ import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
 
+import 'firebase_options.dart';
+
 /// Entry point of the AI Smart Life Assistant application.
 void main() async {
   // Ensure widget bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase Core services
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize Hive local storage
   await Hive.initFlutter();

@@ -9,6 +9,7 @@ import '../../../core/widgets/custom_textfield.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/gradient_background.dart';
+import '../../../core/widgets/custom_snackbar.dart';
 import 'providers/auth_provider.dart';
 
 /// Upgraded Login Screen allowing users to sign in via Email or Mobile number.
@@ -33,6 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   late TabController _tabController;
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
 
   @override
   void initState() {
@@ -71,12 +73,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         },
         onFailure: (error) {
           if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(error), backgroundColor: AppColors.error),
-            );
+            setState(() => _isLoading = false);
+            CustomSnackBar.showError(context, error);
           }
         },
       );
@@ -102,12 +100,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             }
           } catch (e) {
             if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Phone sign-in failed: $e'), backgroundColor: AppColors.error),
-              );
+              setState(() => _isLoading = false);
+              CustomSnackBar.showError(context, 'Phone sign-in failed: $e');
             }
           }
         },
@@ -116,9 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             setState(() {
               _isLoading = false;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(e.message ?? 'Phone verification failed'), backgroundColor: AppColors.error),
-            );
+            CustomSnackBar.showError(context, e.message ?? 'Phone verification failed');
           }
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -200,15 +192,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                               Navigator.of(context).pop();
                               context.go('/home');
                             }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Invalid OTP Code: $e'), backgroundColor: AppColors.error),
-                            );
+                          } on FirebaseAuthException catch (e) {
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                              CustomSnackBar.showError(context, 'Invalid OTP Code: ${e.message}');
+                            }
                           }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter a 6-digit code'), backgroundColor: AppColors.error),
-                          );
+                          CustomSnackBar.showError(context, 'Please enter a 6-digit code');
                         }
                       },
                       child: const Text('Verify', style: TextStyle(color: Colors.white)),
@@ -471,9 +462,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                               onFailure: (error) {
                                 if (mounted) {
                                   setState(() => _isGoogleLoading = false);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(error), backgroundColor: AppColors.error),
-                                  );
+                                  CustomSnackBar.showError(context, error);
                                 }
                               },
                               onCancel: () {
@@ -488,16 +477,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   // Apple button
                   _buildSocialButton(
                     isDark,
+                    isLoading: _isAppleLoading,
                     icon: Icon(
                       Icons.apple_rounded,
                       size: 26,
                       color: isDark ? Colors.white : Colors.black,
                     ),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Apple Sign-In Triggered (Placeholder)')),
-                      );
-                    },
+                    onTap: _isAppleLoading || _isGoogleLoading
+                        ? null
+                        : () async {
+                            setState(() => _isAppleLoading = true);
+                            await ref.read(authNotifierProvider.notifier).signInWithApple(
+                              onSuccess: () {
+                                if (mounted) {
+                                  context.go('/home');
+                                }
+                              },
+                              onFailure: (error) {
+                                if (mounted) {
+                                  setState(() => _isAppleLoading = false);
+                                  CustomSnackBar.showError(context, error);
+                                }
+                              },
+                              onCancel: () {
+                                if (mounted) {
+                                  setState(() => _isAppleLoading = false);
+                                }
+                              },
+                            );
+                          },
                   ),
                 ],
               ),

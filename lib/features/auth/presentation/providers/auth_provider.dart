@@ -96,6 +96,29 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
     }
   }
 
+  Future<void> signInWithApple({
+    required void Function() onSuccess,
+    required void Function(String error) onFailure,
+    void Function()? onCancel,
+    bool isLogin = true,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await _repository.signInWithApple(isLogin: isLogin);
+      if (user != null) {
+        state = AsyncValue.data(user);
+        onSuccess();
+      } else {
+        // User cancelled the sign-in flow
+        state = AsyncValue.data(_repository.currentUser);
+        if (onCancel != null) onCancel();
+      }
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+      onFailure(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   Future<void> updateProfileName(
     String name, {
     required void Function() onSuccess,

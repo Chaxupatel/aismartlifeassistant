@@ -42,7 +42,7 @@ class ProfileScreen extends ConsumerWidget {
               backgroundColor: Colors.transparent,
               child: GlassContainer(
                 blur: 24,
-                opacity: isDark ? 0.08 : 0.15,
+                opacity: isDark ? 0.08 : 0.85,
                 color: isDark ? Colors.black : Colors.white,
                 borderColor: isDark ? Colors.white10 : Colors.black12,
                 padding: const EdgeInsets.all(AppSizes.l),

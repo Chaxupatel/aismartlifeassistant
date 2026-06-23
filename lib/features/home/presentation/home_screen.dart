@@ -55,7 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       ref.read(remindersProvider.notifier).addReminder(newReminder);
       _quickAddController.clear();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Quickly Added: "$title"'),
@@ -75,7 +75,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       dateTime: focusBlockTime,
       category: 'Work',
       isCompleted: false,
-      description: 'Automatically scheduled by AI Assistant to optimize productivity.',
+      description:
+          'Automatically scheduled by AI Assistant to optimize productivity.',
     );
 
     ref.read(remindersProvider.notifier).addReminder(aiFocusReminder);
@@ -92,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Watch shared providers
     final reminders = ref.watch(remindersProvider);
     final events = ref.watch(eventsProvider);
@@ -100,34 +101,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Filter reminders by selected date
     final filteredReminders = reminders.where((r) {
-      final isSameDay = r.dateTime.year == selectedDate.year &&
+      final isSameDay =
+          r.dateTime.year == selectedDate.year &&
           r.dateTime.month == selectedDate.month &&
           r.dateTime.day == selectedDate.day;
-          
+
       if (!isSameDay) return false;
-      
+
       // If selected date is today, hide reminders that have already passed
-      final isToday = selectedDate.year == DateTime.now().year &&
+      final isToday =
+          selectedDate.year == DateTime.now().year &&
           selectedDate.month == DateTime.now().month &&
           selectedDate.day == DateTime.now().day;
-          
+
       if (isToday) {
         return r.dateTime.isAfter(DateTime.now());
       }
-      
+
       return true;
     }).toList()..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     // Filter upcoming reminders (strictly after selected date)
     final upcomingReminders = reminders.where((r) {
-      final dateOnly = DateTime(r.dateTime.year, r.dateTime.month, r.dateTime.day);
+      final dateOnly = DateTime(
+        r.dateTime.year,
+        r.dateTime.month,
+        r.dateTime.day,
+      );
       return dateOnly.isAfter(selectedDate);
     }).toList()..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     // Get days of the current week (Monday to Sunday)
     final now = DateTime.now();
     final currentMonday = now.subtract(Duration(days: now.weekday - 1));
-    final weekDays = List.generate(7, (index) => currentMonday.add(Duration(days: index)));
+    final weekDays = List.generate(
+      7,
+      (index) => currentMonday.add(Duration(days: index)),
+    );
 
     // Check responsiveness
     final screenWidth = MediaQuery.of(context).size.width;
@@ -135,7 +145,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Watch authStateProvider and get displayName
     final authState = ref.watch(authStateProvider);
-    final user = authState.value ?? ref.read(authRepositoryProvider).currentUser;
+    final user =
+        authState.value ?? ref.read(authRepositoryProvider).currentUser;
     final displayName = user?.displayName;
     final firstName = displayName != null && displayName.trim().isNotEmpty
         ? displayName.trim().split(' ').first
@@ -143,10 +154,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Define dashboard widgets for modular layouts
     final headerWidget = _buildHeader(context, firstName, isDark);
-    final calendarWidget = _buildCalendarPreview(weekDays, selectedDate, isDark);
-    final todayRemindersWidget = _buildTodayReminders(filteredReminders, selectedDate, isDark);
-    final upcomingRemindersWidget = _buildUpcomingReminders(upcomingReminders, isDark);
-    
+    final calendarWidget = _buildCalendarPreview(
+      weekDays,
+      selectedDate,
+      isDark,
+    );
+    final todayRemindersWidget = _buildTodayReminders(
+      filteredReminders,
+      selectedDate,
+      isDark,
+    );
+    final upcomingRemindersWidget = _buildUpcomingReminders(
+      upcomingReminders,
+      isDark,
+    );
+
     final quickAddWidget = _buildQuickAdd(selectedDate, isDark);
     final aiWidget = _buildAIAssistantCard(isDark);
     final eventsWidget = _buildEventsCard(events, isDark);
@@ -160,14 +182,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               left: AppSizes.m,
               right: AppSizes.m,
               top: AppSizes.m,
-              bottom: 120, // Margin to prevent overlap with floating glass navigation bar
+              bottom:
+                  120, // Margin to prevent overlap with floating glass navigation bar
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 headerWidget,
                 const SizedBox(height: AppSizes.l),
-                
+
                 if (isWide) ...[
                   // Grid/Row layout for Wide screen sizes (Tablets, Desktops)
                   Row(
@@ -238,7 +261,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'Welcome to Smart Life',
               style: TextStyle(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -247,7 +272,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'Hello, $firstName!',
               style: TextStyle(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 letterSpacing: -0.6,
@@ -283,8 +310,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildCalendarPreview(List<DateTime> weekDays, DateTime selectedDate, bool isDark) {
-    final List<String> dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  Widget _buildCalendarPreview(
+    List<DateTime> weekDays,
+    DateTime selectedDate,
+    bool isDark,
+  ) {
+    final List<String> dayNames = [
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +331,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Text(
           'Calendar Preview',
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
@@ -304,15 +345,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           opacity: isDark ? 0.06 : 0.1,
           color: isDark ? Colors.black : Colors.white,
           borderColor: isDark ? Colors.white10 : Colors.black12,
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.m, horizontal: AppSizes.s),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSizes.m,
+            horizontal: AppSizes.s,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(7, (index) {
               final date = weekDays[index];
-              final isToday = date.day == DateTime.now().day &&
+              final isToday =
+                  date.day == DateTime.now().day &&
                   date.month == DateTime.now().month &&
                   date.year == DateTime.now().year;
-              final isSelected = date.day == selectedDate.day &&
+              final isSelected =
+                  date.day == selectedDate.day &&
                   date.month == selectedDate.month &&
                   date.year == selectedDate.year;
 
@@ -322,14 +368,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
-                        : (isToday ? AppColors.primary.withValues(alpha: 0.15) : Colors.transparent),
+                        : (isToday
+                              ? AppColors.primary.withValues(alpha: 0.15)
+                              : Colors.transparent),
                     borderRadius: BorderRadius.circular(16),
                     border: isToday && !isSelected
-                        ? Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5)
+                        ? Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            width: 1.5,
+                          )
                         : null,
                     boxShadow: isSelected
                         ? [
@@ -337,7 +391,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
-                            )
+                            ),
                           ]
                         : null,
                   ),
@@ -359,7 +413,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(
                           color: isSelected
                               ? Colors.white
-                              : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                              : (isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary),
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -375,13 +431,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildTodayReminders(List<Reminder> filteredReminders, DateTime selectedDate, bool isDark) {
+  Widget _buildTodayReminders(
+    List<Reminder> filteredReminders,
+    DateTime selectedDate,
+    bool isDark,
+  ) {
     final now = DateTime.now();
-    final isSelectedToday = selectedDate.day == now.day &&
+    final isSelectedToday =
+        selectedDate.day == now.day &&
         selectedDate.month == now.month &&
         selectedDate.year == now.year;
 
-    final title = isSelectedToday ? "Today's Reminders" : "Reminders for ${selectedDate.day}/${selectedDate.month}";
+    final title = isSelectedToday
+        ? "Today's Reminders"
+        : "Reminders for ${selectedDate.day}/${selectedDate.month}";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,7 +452,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Text(
           title,
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
@@ -415,7 +480,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text(
                     'No reminders scheduled for this day.',
                     style: TextStyle(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : AppColors.lightTextSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -439,31 +506,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       InkWell(
                         onTap: () {
-                          ref.read(remindersProvider.notifier).toggleReminder(reminder.id);
+                          ref
+                              .read(remindersProvider.notifier)
+                              .toggleReminder(reminder.id);
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Icon(
                           reminder.isCompleted
                               ? Icons.check_circle_rounded
                               : Icons.radio_button_off_rounded,
-                          color: reminder.isCompleted ? AppColors.success : AppColors.primary,
+                          color: reminder.isCompleted
+                              ? AppColors.success
+                              : AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: AppSizes.m),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => context.push('/reminders/${reminder.id}'),
+                          onTap: () =>
+                              context.push('/reminders/${reminder.id}'),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 reminder.title,
                                 style: TextStyle(
-                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.lightTextPrimary,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  decoration: reminder.isCompleted ? TextDecoration.lineThrough : null,
-                                  decorationColor: isDark ? Colors.white60 : Colors.black45,
+                                  decoration: reminder.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  decorationColor: isDark
+                                      ? Colors.white60
+                                      : Colors.black45,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -472,13 +550,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   Icon(
                                     Icons.access_time_rounded,
                                     size: 12,
-                                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '${reminder.dateTime.hour.toString().padLeft(2, '0')}:${reminder.dateTime.minute.toString().padLeft(2, '0')}',
                                     style: TextStyle(
-                                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                      color: isDark
+                                          ? AppColors.darkTextSecondary
+                                          : AppColors.lightTextSecondary,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -489,7 +571,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -514,14 +599,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildUpcomingReminders(List<Reminder> upcomingReminders, bool isDark) {
+  Widget _buildUpcomingReminders(
+    List<Reminder> upcomingReminders,
+    bool isDark,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Upcoming Reminders',
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
@@ -535,10 +625,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: isDark ? Colors.black : Colors.white,
             borderColor: isDark ? Colors.white10 : Colors.black12,
             padding: const EdgeInsets.all(AppSizes.m),
-            child: const Center(
+            child: Center(
               child: Text(
                 'No upcoming tasks scheduled.',
-                style: TextStyle(color: Colors.white60, fontSize: 13),
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : AppColors.lightTextSecondary,
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
@@ -565,7 +660,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Text(
                           reminder.title,
                           style: TextStyle(
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -599,7 +696,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Text(
           'Quick Add Reminder',
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
@@ -641,14 +740,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         decoration: InputDecoration(
                           labelText: 'Category',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black26),
+                            borderSide: BorderSide(
+                              color: isDark ? Colors.white24 : Colors.black26,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
                         dropdownColor: isDark ? Colors.black87 : Colors.white,
@@ -670,8 +776,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: BorderSide(color: isDark ? Colors.white24 : Colors.black26),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(
+                            color: isDark ? Colors.white24 : Colors.black26,
+                          ),
                         ),
                         onPressed: () async {
                           final time = await showTimePicker(
@@ -720,7 +830,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Text(
           'AI Assistant Recommendations',
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
@@ -753,7 +865,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text(
                     'Smart Insights',
                     style: TextStyle(
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -764,7 +878,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Text(
                 'You have multiple high priority reminders today. Let me automatically set up a focus deep work block this afternoon to help you complete them.',
                 style: TextStyle(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -784,12 +900,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusM + 4),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusM + 4,
+                          ),
                         ),
                         side: const BorderSide(color: AppColors.primary),
                       ),
                       onPressed: () => context.push('/ai-reminder-creation'),
-                      icon: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
+                      icon: const Icon(
+                        Icons.auto_awesome,
+                        color: AppColors.primary,
+                        size: 16,
+                      ),
                       label: const Text(
                         'AI Creator',
                         style: TextStyle(
@@ -821,7 +943,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'Upcoming Events',
               style: TextStyle(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 letterSpacing: -0.3,
@@ -875,11 +999,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       width: 1,
                     ),
                   ),
-                  child: Icon(
-                    nextEvent.icon,
-                    color: nextEvent.color,
-                    size: 22,
-                  ),
+                  child: Icon(nextEvent.icon, color: nextEvent.color, size: 22),
                 ),
                 const SizedBox(width: AppSizes.m),
                 Expanded(
@@ -889,7 +1009,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Text(
                         nextEvent.title,
                         style: TextStyle(
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
@@ -902,13 +1024,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Icon(
                             Icons.calendar_month_rounded,
                             size: 12,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${nextEvent.dateTime.day}/${nextEvent.dateTime.month}/${nextEvent.dateTime.year} - ${nextEvent.dateTime.hour.toString().padLeft(2, '0')}:${nextEvent.dateTime.minute.toString().padLeft(2, '0')}',
                             style: TextStyle(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -920,14 +1046,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Icon(
                             Icons.location_on_outlined,
                             size: 12,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               nextEvent.location,
                               style: TextStyle(
-                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
                                 fontSize: 12,
                               ),
                               maxLines: 1,

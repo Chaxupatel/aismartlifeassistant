@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
+import '../../../firebase_options.dart';
 
 /// Abstract definition for application-wide authentication services.
 abstract class AuthRepository {
@@ -9,6 +11,7 @@ abstract class AuthRepository {
   Future<User?> signUpWithEmailAndPassword(String email, String name, String password);
   Future<void> sendPasswordResetEmail(String email);
   Future<User?> signInWithGoogle({bool isLogin = true});
+  Future<User?> signInWithApple({bool isLogin = true});
   Future<void> updateDisplayName(String name);
   Future<void> reauthenticateAndChangePassword(String currentPassword, String newPassword);
   Future<void> updatePassword(String newPassword);
@@ -18,7 +21,11 @@ abstract class AuthRepository {
 /// Firebase implementation of the [AuthRepository].
 class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS
+        ? DefaultFirebaseOptions.ios.iosClientId
+        : null,
+  );
 
   @override
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
@@ -76,21 +83,6 @@ class FirebaseAuthRepository implements AuthRepository {
       // User cancelled the sign-in flow
       if (googleUser == null) return null;
 
-      // Enforce Login vs Signup logic
-      final signInMethods = await _firebaseAuth.fetchSignInMethodsForEmail(googleUser.email);
-      
-      if (isLogin && signInMethods.isEmpty) {
-        // Log out of google sign in so they aren't stuck on the cached account if they try again
-        await _googleSignIn.signOut();
-        throw Exception('No account found with this Google email. Please sign up first.');
-      }
-      
-      if (!isLogin && signInMethods.isNotEmpty) {
-        // We're signing up, but they already exist
-        await _googleSignIn.signOut();
-        throw Exception('An account already exists with this Google email. Please log in instead.');
-      }
-
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
@@ -107,6 +99,23 @@ class FirebaseAuthRepository implements AuthRepository {
       throw _parseAuthException(e);
     } catch (e) {
       throw Exception('Google Sign-In failed: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<User?> signInWithApple({bool isLogin = true}) async {
+    try {
+      final appleProvider = AppleAuthProvider();
+      // On iOS/macOS, this uses the native Apple Sign-In sheet.
+      // On Android/Web, this opens a web view to authenticate with Apple.
+      final credential = await _firebaseAuth.signInWithProvider(appleProvider);
+      return credential.user;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'web-context-cancelled') {
+        // User cancelled Apple sign in web-flow
+        return null;
+      }
+      throw _parseAuthException(e);
     }
   }
 

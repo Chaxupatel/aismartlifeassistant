@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/glass_container.dart';
+import '../../../core/widgets/ad_banner_widget.dart';
 
 /// Navigation shell wrapper using [StatefulNavigationShell] from go_router.
 /// Upgraded to render a floating, capsule-shaped glass navigation bar with
@@ -32,15 +33,22 @@ class MainNavigationShell extends StatelessWidget {
       body: navigationShell,
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.only(bottom: AppSizes.l), // Raised slightly higher
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
-          child: GlassContainer(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.s + 4),
-            borderRadius: 30, // Capsule shape
-            blur: 24,
-            opacity: isDark ? 0.12 : 0.22,
-            color: isDark ? Colors.black : Colors.white,
-            borderColor: isDark ? const Color(0x22FFFFFF) : const Color(0x44FFFFFF),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (navigationShell.currentIndex == 0) ...[
+              const AdBannerWidget(),
+              const SizedBox(height: 2), // Spacing between the ad and the navigation capsule
+            ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
+              child: GlassContainer(
+                padding: const EdgeInsets.symmetric(vertical: AppSizes.s + 4),
+                borderRadius: 30, // Capsule shape
+                blur: 24,
+                opacity: isDark ? 0.12 : 0.22,
+                color: isDark ? Colors.black : Colors.white,
+                borderColor: isDark ? const Color(0x22FFFFFF) : const Color(0x44FFFFFF),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -78,9 +86,11 @@ class MainNavigationShell extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  ),
+);
+}
 
   Widget _buildNavItem(
     BuildContext context, {

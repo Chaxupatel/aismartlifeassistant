@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
@@ -16,6 +17,9 @@ import 'firebase_options.dart';
 void main() async {
   // Ensure widget bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize the Mobile Ads SDK
+  await MobileAds.instance.initialize();
 
   // Initialize Firebase Core services
   await Firebase.initializeApp(

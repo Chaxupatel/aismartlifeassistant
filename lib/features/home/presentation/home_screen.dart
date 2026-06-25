@@ -7,6 +7,7 @@ import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/custom_textfield.dart';
+import '../../../core/widgets/ad_banner_widget.dart';
 import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../../events/presentation/providers/events_provider.dart';
@@ -64,7 +65,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -159,8 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               left: AppSizes.m,
               right: AppSizes.m,
               top: AppSizes.m,
-              bottom:
-                  120, // Margin to prevent overlap with floating glass navigation bar
+              bottom: 190, // Margin to prevent overlap with both the floating glass navigation bar and the ad
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

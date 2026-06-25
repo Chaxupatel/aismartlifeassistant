@@ -21,46 +21,24 @@ class SignupScreen extends ConsumerStatefulWidget {
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerProviderStateMixin {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _emailFormKey = GlobalKey<FormState>();
-  final _phoneFormKey = GlobalKey<FormState>();
   
   final _nameEmailController = TextEditingController();
   final _emailController = TextEditingController();
   final _emailPasswordController = TextEditingController();
   final _emailConfirmPasswordController = TextEditingController();
 
-  final _namePhoneController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _phonePasswordController = TextEditingController();
-  final _phoneConfirmPasswordController = TextEditingController();
-
-  late TabController _tabController;
   bool _isLoading = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _nameEmailController.dispose();
     _emailController.dispose();
     _emailPasswordController.dispose();
     _emailConfirmPasswordController.dispose();
-    
-    _namePhoneController.dispose();
-    _phoneController.dispose();
-    _phonePasswordController.dispose();
-    _phoneConfirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -91,148 +69,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
     }
   }
 
-  void _handlePhoneSignup() {
-    if (_phoneFormKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      final phone = _phoneController.text.trim();
-      FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: phone,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          try {
-            final authResult = await FirebaseAuth.instance.signInWithCredential(credential);
-            final user = authResult.user;
-            if (user != null) {
-              await user.updateDisplayName(_namePhoneController.text.trim());
-              await user.reload();
-            }
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-              context.go('/home');
-            }
-          } catch (e) {
-            if (mounted) {
-              setState(() => _isLoading = false);
-              CustomSnackBar.showError(context, 'Phone registration failed: $e');
-            }
-          }
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            CustomSnackBar.showError(context, e.message ?? 'Phone registration failed');
-          }
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            _showOtpDialog(verificationId);
-          }
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-        },
-      );
-    }
-  }
-
-  void _showOtpDialog(String verificationId) {
-    final otpController = TextEditingController();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: GlassContainer(
-            blur: 24,
-            opacity: isDark ? 0.08 : 0.15,
-            color: isDark ? Colors.black : Colors.white,
-            borderColor: isDark ? Colors.white10 : Colors.black12,
-            padding: const EdgeInsets.all(AppSizes.l),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Verify Phone OTP',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.m),
-                CustomTextField(
-                  controller: otpController,
-                  labelText: '6-Digit OTP Code',
-                  prefixIcon: Icons.pin_rounded,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: AppSizes.l),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: AppSizes.s),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onPressed: () async {
-                        final smsCode = otpController.text.trim();
-                        if (smsCode.length == 6) {
-                          try {
-                            final credential = PhoneAuthProvider.credential(
-                              verificationId: verificationId,
-                              smsCode: smsCode,
-                            );
-                            final authResult = await FirebaseAuth.instance.signInWithCredential(credential);
-                            final user = authResult.user;
-                            if (user != null) {
-                              await user.updateDisplayName(_namePhoneController.text.trim());
-                              await user.reload();
-                            }
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                              context.go('/home');
-                            }
-                          } on FirebaseAuthException catch (e) {
-                            if (mounted) {
-                              Navigator.of(context).pop();
-                              CustomSnackBar.showError(context, 'Invalid OTP Code: ${e.message}');
-                            }
-                          }
-                        } else {
-                          CustomSnackBar.showError(context, 'Please enter a 6-digit code');
-                        }
-                      },
-                      child: const Text('Verify', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,194 +115,80 @@ class _SignupScreenState extends ConsumerState<SignupScreen> with SingleTickerPr
                 padding: const EdgeInsets.all(AppSizes.l),
                 child: Column(
                   children: [
-                    // iOS 26 Capsule Tab Bar
-                    Container(
-                      height: 44,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        dividerColor: Colors.transparent,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelColor: isDark ? Colors.black : Colors.white,
-                        unselectedLabelColor: isDark ? Colors.white70 : Colors.black87,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        indicator: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          color: isDark ? Colors.white : AppColors.primary,
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isDark ? Colors.white : AppColors.primary).withValues(alpha: 0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        tabs: const [
-                          Tab(text: 'Email'),
-                          Tab(text: 'Mobile'),
+                    // Email Signup Form
+                    Form(
+                      key: _emailFormKey,
+                      child: Column(
+                        children: [
+                          CustomTextField(
+                            controller: _nameEmailController,
+                            labelText: 'Full Name',
+                            prefixIcon: Icons.person_outline_rounded,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.m),
+                          CustomTextField(
+                            controller: _emailController,
+                            labelText: 'Email Address',
+                            prefixIcon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              }
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                return 'Please enter a valid email address';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.m),
+                          CustomTextField(
+                            controller: _emailPasswordController,
+                            labelText: 'Password',
+                            prefixIcon: Icons.lock_outline_rounded,
+                            obscureText: true,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.m),
+                          CustomTextField(
+                            controller: _emailConfirmPasswordController,
+                            labelText: 'Confirm Password',
+                            prefixIcon: Icons.lock_outline_rounded,
+                            obscureText: true,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please confirm your password';
+                              }
+                              if (value != _emailPasswordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: AppSizes.l),
 
-                    // Dynamic layout switching to prevent static height overflows
-                    IndexedStack(
-                      index: _tabController.index,
-                      children: [
-                        // Email Signup Form
-                        Form(
-                          key: _emailFormKey,
-                          child: Column(
-                            children: [
-                              CustomTextField(
-                                controller: _nameEmailController,
-                                labelText: 'Full Name',
-                                prefixIcon: Icons.person_outline_rounded,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSizes.m),
-                              CustomTextField(
-                                controller: _emailController,
-                                labelText: 'Email Address',
-                                prefixIcon: Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                                    return 'Please enter a valid email address';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSizes.m),
-                              CustomTextField(
-                                controller: _emailPasswordController,
-                                labelText: 'Password',
-                                prefixIcon: Icons.lock_outline_rounded,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSizes.m),
-                              CustomTextField(
-                                controller: _emailConfirmPasswordController,
-                                labelText: 'Confirm Password',
-                                prefixIcon: Icons.lock_outline_rounded,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please confirm your password';
-                                  }
-                                  if (value != _emailPasswordController.text) {
-                                    return 'Passwords do not match';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Mobile Signup Form
-                        Form(
-                          key: _phoneFormKey,
-                          child: Column(
-                            children: [
-                              CustomTextField(
-                                controller: _namePhoneController,
-                                labelText: 'Full Name',
-                                prefixIcon: Icons.person_outline_rounded,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSizes.m),
-                              CustomTextField(
-                                controller: _phoneController,
-                                labelText: 'Mobile Number',
-                                prefixIcon: Icons.phone_android_rounded,
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your phone number';
-                                  }
-                                  if (!RegExp(r'^\+?[0-9]{8,15}$').hasMatch(value)) {
-                                    return 'Please enter a valid phone number';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSizes.m),
-                              CustomTextField(
-                                controller: _phonePasswordController,
-                                labelText: 'Password',
-                                prefixIcon: Icons.lock_outline_rounded,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppSizes.m),
-                              CustomTextField(
-                                controller: _phoneConfirmPasswordController,
-                                labelText: 'Confirm Password',
-                                prefixIcon: Icons.lock_outline_rounded,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please confirm your password';
-                                  }
-                                  if (value != _phonePasswordController.text) {
-                                    return 'Passwords do not match';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.m),
-
                     // Sign Up Button
                     PrimaryButton(
                       label: 'Create Account',
                       isLoading: _isLoading,
-                      onPressed: () {
-                        if (_tabController.index == 0) {
-                          _handleEmailSignup();
-                        } else {
-                          _handlePhoneSignup();
-                        }
-                      },
+                      onPressed: _handleEmailSignup,
                     ),
                   ],
                 ),

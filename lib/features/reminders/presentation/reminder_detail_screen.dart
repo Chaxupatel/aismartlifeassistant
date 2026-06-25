@@ -85,13 +85,16 @@ class ReminderDetailScreen extends ConsumerWidget {
       ),
       extendBodyBehindAppBar: true,
       body: GradientBackground(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.l),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(
+            left: AppSizes.m,
+            right: AppSizes.m,
+            top: 110,
+            bottom: AppSizes.xl,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 100), // Spacing for AppBar
-              
               // Detail Glass Card
               GlassContainer(
                 blur: 20,

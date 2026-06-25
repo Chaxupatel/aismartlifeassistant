@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
+import '../../reminders/domain/reminder.dart';
+import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/event.dart';
 import 'providers/events_provider.dart';
 
@@ -21,9 +24,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   final List<String> _categories = [
     'All',
     'Cricket Matches',
-    'Movies',
-    'OTT Releases',
-    'Birthdays',
+    'Football Matches',
     'Holidays',
   ];
 
@@ -62,6 +63,126 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     }
   }
 
+  String _formatDateTime(DateTime dateTime) {
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final year = dateTime.year;
+    
+    int hour = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final ampm = hour >= 12 ? 'PM' : 'AM';
+    
+    hour = hour % 12;
+    if (hour == 0) hour = 12;
+    
+    return '$day/$month/$year - ${hour.toString().padLeft(2, '0')}:$minute $ampm';
+  }
+
+  String _formatTimeOnly(DateTime dateTime) {
+    int hour = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final ampm = hour >= 12 ? 'PM' : 'AM';
+    
+    hour = hour % 12;
+    if (hour == 0) hour = 12;
+    
+    return '${hour.toString().padLeft(2, '0')}:$minute $ampm';
+  }
+
+  void _showAddReminderDialog(BuildContext context, Event event) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: event.color.withValues(alpha: 0.15),
+              ),
+              child: Icon(event.icon, color: event.color, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Add to Reminders?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Would you like to set a reminder for "${event.title}" on ${event.dateTime.day.toString().padLeft(2, '0')}/${event.dateTime.month.toString().padLeft(2, '0')}/${event.dateTime.year} at ${_formatTimeOnly(event.dateTime)}?',
+          style: TextStyle(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Redirect to Add Reminder screen with prefilled details
+              context.push('/reminders/add', extra: {
+                'title': event.title,
+                'dateTime': event.dateTime,
+                'category': 'General',
+                'description': 'Reminder for event: ${event.title} at ${event.location}',
+              });
+            },
+            child: const Text(
+              'Customize',
+              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Directly add the reminder
+              final newReminder = Reminder(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                title: event.title,
+                dateTime: event.dateTime,
+                category: 'General',
+                description: 'Reminder for event: ${event.title} at ${event.location}',
+                isCompleted: false,
+                repeatType: 'One Time',
+                enableNotification: true,
+                enableAlarm: false,
+                snoozeDuration: 5,
+              );
+              ref.read(remindersProvider.notifier).addReminder(newReminder);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Added reminder for: ${event.title}'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            child: const Text('Add Directly'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -69,6 +190,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
     // Watch the events list state from Riverpod
     final events = ref.watch(eventsProvider);
+    final isLoading = ref.watch(eventsLoadingProvider);
 
     // Filter events based on selected category
     final filteredEvents = _selectedCategory == 'All'
@@ -154,13 +276,15 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           Expanded(
             child: sortedEvents.isEmpty
                 ? Center(
-                    child: Text(
-                      'No events scheduled in this category.',
-                      style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.black54,
-                        fontSize: 14,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const CircularProgressIndicator(color: AppColors.primary)
+                        : Text(
+                            'No events scheduled in this category.',
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.only(
@@ -177,114 +301,117 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: AppSizes.m),
-                        child: GlassContainer(
-                          blur: 20,
-                          opacity: isDark ? 0.08 : 0.12,
-                          color: isDark ? Colors.black : Colors.white,
-                          borderColor: isDark ? Colors.white10 : Colors.black12,
-                          padding: const EdgeInsets.all(AppSizes.m),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Event Category Icon Indicator
-                              Container(
-                                width: 46,
-                                height: 46,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: color.withValues(alpha: 0.15),
-                                  border: Border.all(
-                                    color: color.withValues(alpha: 0.3),
-                                    width: 1,
+                        child: GestureDetector(
+                          onTap: () => _showAddReminderDialog(context, event),
+                          child: GlassContainer(
+                            blur: 20,
+                            opacity: isDark ? 0.08 : 0.12,
+                            color: isDark ? Colors.black : Colors.white,
+                            borderColor: isDark ? Colors.white10 : Colors.black12,
+                            padding: const EdgeInsets.all(AppSizes.m),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Event Category Icon Indicator
+                                Container(
+                                  width: 46,
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: color.withValues(alpha: 0.15),
+                                    border: Border.all(
+                                      color: color.withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    color: color,
+                                    size: 22,
                                   ),
                                 ),
-                                child: Icon(
-                                  icon,
-                                  color: color,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: AppSizes.m),
-                              
-                              // Event texts
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      event.title,
-                                      style: TextStyle(
-                                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
+                                const SizedBox(width: AppSizes.m),
+                                
+                                // Event texts
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        event.title,
+                                        style: TextStyle(
+                                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_month_rounded,
-                                          size: 12,
-                                          color: isDark ? Colors.white54 : Colors.black54,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${event.dateTime.day}/${event.dateTime.month}/${event.dateTime.year} - ${event.dateTime.hour.toString().padLeft(2, '0')}:${event.dateTime.minute.toString().padLeft(2, '0')}',
-                                          style: TextStyle(
-                                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                            fontSize: 12,
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_month_rounded,
+                                            size: 12,
+                                            color: isDark ? Colors.white54 : Colors.black54,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.location_on_outlined,
-                                          size: 12,
-                                          color: isDark ? Colors.white54 : Colors.black54,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Expanded(
-                                          child: Text(
-                                            event.location,
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _formatDateTime(event.dateTime),
                                             style: TextStyle(
                                               color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                                               fontSize: 12,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.location_on_outlined,
+                                            size: 12,
+                                            color: isDark ? Colors.white54 : Colors.black54,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              event.location,
+                                              style: TextStyle(
+                                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: AppSizes.s),
+ 
+                                // Time Countdown Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: _getBadgeColor(countdown).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: _getBadgeColor(countdown).withValues(alpha: 0.3),
+                                      width: 1,
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: AppSizes.s),
-
-                              // Time Countdown Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _getBadgeColor(countdown).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: _getBadgeColor(countdown).withValues(alpha: 0.3),
-                                    width: 1,
+                                  ),
+                                  child: Text(
+                                    countdown,
+                                    style: TextStyle(
+                                      color: _getBadgeColor(countdown),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                                child: Text(
-                                  countdown,
-                                  style: TextStyle(
-                                    color: _getBadgeColor(countdown),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );

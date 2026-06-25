@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
@@ -18,6 +21,24 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Configure Firebase Crashlytics
+  if (!kIsWeb) {
+    // Pass all uncaught "fatal" errors from the framework to Crashlytics
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+
+    // Disable Crashlytics collection in debug mode to avoid cluttering logs
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+
+    // Disable Analytics collection in debug mode to avoid cluttering logs
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
+  }
 
   // Initialize Hive local storage
   await Hive.initFlutter();

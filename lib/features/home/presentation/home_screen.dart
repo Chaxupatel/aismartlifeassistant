@@ -65,29 +65,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _triggerAISchedule() {
-    final today = DateTime.now();
-    final focusBlockTime = DateTime(today.year, today.month, today.day, 15, 0);
-
-    final aiFocusReminder = Reminder(
-      id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
-      title: 'AI Focus Session: Study & Deep Work',
-      dateTime: focusBlockTime,
-      category: 'Work',
-      isCompleted: false,
-      description:
-          'Automatically scheduled by AI Assistant to optimize productivity.',
-    );
-
-    ref.read(remindersProvider.notifier).addReminder(aiFocusReminder);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('AI Scheduled: "Study & Deep Work" at 3:00 PM today.'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -863,7 +840,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(width: AppSizes.s),
                   Text(
-                    'Smart Insights',
+                    'AI Assistant',
                     style: TextStyle(
                       color: isDark
                           ? AppColors.darkTextPrimary
@@ -876,7 +853,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: AppSizes.m),
               Text(
-                'You have multiple high priority reminders today. Let me automatically set up a focus deep work block this afternoon to help you complete them.',
+                'Create reminders and schedule tasks quickly using natural language. Try the AI Assistant to plan your day.',
                 style: TextStyle(
                   color: isDark
                       ? AppColors.darkTextSecondary
@@ -886,43 +863,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               const SizedBox(height: AppSizes.l),
-              Row(
-                children: [
-                  Expanded(
-                    child: PrimaryButton(
-                      label: 'Schedule Focus',
-                      onPressed: _triggerAISchedule,
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.s),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusM + 4,
-                          ),
-                        ),
-                        side: const BorderSide(color: AppColors.primary),
-                      ),
-                      onPressed: () => context.push('/ai-reminder-creation'),
-                      icon: const Icon(
-                        Icons.auto_awesome,
-                        color: AppColors.primary,
-                        size: 16,
-                      ),
-                      label: const Text(
-                        'AI Creator',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              PrimaryButton(
+                label: 'Create with AI',
+                icon: Icons.auto_awesome,
+                onPressed: () => context.push('/ai-reminder-creation'),
               ),
             ],
           ),

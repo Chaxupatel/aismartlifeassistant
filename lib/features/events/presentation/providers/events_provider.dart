@@ -1,113 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/event.dart';
+import '../../data/events_api_service.dart';
 
-/// Notifier class managing the list of life events, social gatherings, and milestones in memory.
+/// Notifier class managing the loading state of events.
+class EventsLoadingNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void setLoading(bool loading) {
+    state = loading;
+  }
+}
+
+/// Provider exposing the loading state of the events fetch operation.
+final eventsLoadingProvider = NotifierProvider<EventsLoadingNotifier, bool>(EventsLoadingNotifier.new);
+
+/// Notifier class managing the list of real-world events fetched from public APIs.
 class EventsNotifier extends Notifier<List<Event>> {
+  final EventsApiService _apiService = EventsApiService();
+
   @override
   List<Event> build() {
-    final now = DateTime.now();
-    return [
-      // Cricket Matches
-      Event(
-        id: 'c1',
-        title: 'IPL Final: MI vs CSK Showdown',
-        dateTime: DateTime(now.year, now.month, now.day + 2, 19, 30),
-        location: 'Wankhede Stadium, Mumbai',
-        type: 'Cricket Matches',
-        icon: Icons.sports_cricket_rounded,
-        color: Colors.blueAccent,
-      ),
-      Event(
-        id: 'c2',
-        title: 'India vs Australia T20 International',
-        dateTime: DateTime(now.year, now.month, now.day + 9, 15, 0),
-        location: 'Narendra Modi Stadium, Ahmedabad',
-        type: 'Cricket Matches',
-        icon: Icons.sports_cricket_rounded,
-        color: Colors.amberAccent,
-      ),
+    // Asynchronously fetch real events after the build phase is complete
+    Future.microtask(() => _fetchRealEvents());
 
-      // Movies
-      Event(
-        id: 'm1',
-        title: 'Spider-Man: Beyond the Spider-Verse',
-        dateTime: DateTime(now.year, now.month, now.day + 7, 18, 0),
-        location: 'IMAX Theater Mall of India',
-        type: 'Movies',
-        icon: Icons.movie_creation_rounded,
-        color: Colors.tealAccent,
-      ),
-      Event(
-        id: 'm2',
-        title: 'Christopher Nolan\'s Next Sci-Fi Debut',
-        dateTime: DateTime(now.year, now.month, now.day + 28, 20, 30),
-        location: 'PVR Director\'s Cut, Delhi',
-        type: 'Movies',
-        icon: Icons.movie_filter_rounded,
-        color: Colors.purpleAccent,
-      ),
+    return []; // Return empty list initially
+  }
 
-      // OTT Releases
-      Event(
-        id: 'o1',
-        title: 'Stranger Things Season 5 (Netflix)',
-        dateTime: DateTime(now.year, now.month, now.day + 12, 12, 30),
-        location: 'Netflix Global Streaming',
-        type: 'OTT Releases',
-        icon: Icons.live_tv_rounded,
-        color: Colors.redAccent,
-      ),
-      Event(
-        id: 'o2',
-        title: 'The Boys Season 5 Launch (Amazon Prime)',
-        dateTime: DateTime(now.year, now.month, now.day + 6, 9, 0),
-        location: 'Amazon Prime Streaming',
-        type: 'OTT Releases',
-        icon: Icons.tv_rounded,
-        color: Colors.cyanAccent,
-      ),
+  Future<void> _fetchRealEvents() async {
+    try {
+      debugPrint('EventsNotifier: Starting incremental real-world events fetch...');
+      
+      // Ensure the loading state is active
+      ref.read(eventsLoadingProvider.notifier).setLoading(true);
+      
+      int completedRequests = 0;
+      void checkCompletion() {
+        completedRequests++;
+        if (completedRequests == 3) {
+          ref.read(eventsLoadingProvider.notifier).setLoading(false);
+          debugPrint('EventsNotifier: Fetch complete. Final count: ${state.length}');
+        }
+      }
 
-      // Birthdays
-      Event(
-        id: 'b1',
-        title: 'Mom\'s 50th Golden Jubilee Birthday',
-        dateTime: DateTime(now.year, now.month, now.day + 1, 19, 0),
-        location: 'Grand Horizon Cafe Lounge',
-        type: 'Birthdays',
-        icon: Icons.cake_rounded,
-        color: Colors.pinkAccent,
-      ),
-      Event(
-        id: 'b2',
-        title: 'Sarah\'s Surprise Birthday Barbecue',
-        dateTime: DateTime(now.year, now.month, now.day + 15, 18, 30),
-        location: 'Sarah\'s Backyard Garden',
-        type: 'Birthdays',
-        icon: Icons.celebration_rounded,
-        color: Colors.deepOrangeAccent,
-      ),
+      // Fetch each API independently with a timeout
+      _apiService.fetchHolidays().timeout(const Duration(seconds: 4)).then((events) {
+        if (events.isNotEmpty) {
+          state = [...state, ...events]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+          debugPrint('EventsNotifier: Loaded ${events.length} holidays.');
+        }
+        checkCompletion();
+      }).catchError((e) {
+        debugPrint('EventsNotifier: Error/Timeout fetching holidays: $e');
+        checkCompletion();
+      });
 
-      // Holidays
-      Event(
-        id: 'h1',
-        title: 'World Music Day public holiday',
-        dateTime: DateTime(now.year, now.month, now.day + 2, 0, 0),
-        location: 'National Festival Day',
-        type: 'Holidays',
-        icon: Icons.brightness_7_rounded,
-        color: Colors.orangeAccent,
-      ),
-      Event(
-        id: 'h2',
-        title: 'Independence Day public holiday',
-        dateTime: DateTime(now.year, now.month, now.day + 15, 0, 0),
-        location: 'Federal Public Holiday',
-        type: 'Holidays',
-        icon: Icons.flag_rounded,
-        color: Colors.greenAccent,
-      ),
-    ];
+      _apiService.fetchFootballMatches().timeout(const Duration(seconds: 15)).then((events) {
+        if (events.isNotEmpty) {
+          state = [...state, ...events]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+          debugPrint('EventsNotifier: Loaded ${events.length} football matches.');
+        }
+        checkCompletion();
+      }).catchError((e) {
+        debugPrint('EventsNotifier: Error/Timeout fetching football matches: $e');
+        checkCompletion();
+      });
+
+      _apiService.fetchCricketMatches().timeout(const Duration(seconds: 8)).then((events) {
+        if (events.isNotEmpty) {
+          state = [...state, ...events]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+          debugPrint('EventsNotifier: Loaded ${events.length} cricket matches.');
+        }
+        checkCompletion();
+      }).catchError((e) {
+        debugPrint('EventsNotifier: Error/Timeout fetching cricket matches: $e');
+        checkCompletion();
+      });
+
+    } catch (e) {
+      ref.read(eventsLoadingProvider.notifier).setLoading(false);
+      debugPrint('EventsNotifier: Failed to initiate events fetch: $e');
+    }
   }
 
   void addEvent(Event event) {

@@ -30,4 +30,5 @@ class AppStrings {
   static const String profile = 'Profile';
   static const String aiAssistant = 'AI Assistant';
   static const String settings = 'Settings';
+  static const String appVersion = '1.0.0';
 }

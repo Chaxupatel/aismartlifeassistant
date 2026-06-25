@@ -101,6 +101,37 @@ class RuleBasedParser {
       }
     }
 
+    // Parse Month (e.g. "July", "December")
+    int? targetMonth;
+    final monthsMap = {
+      'january': 1, 'jan': 1,
+      'february': 2, 'feb': 2,
+      'march': 3, 'mar': 3,
+      'april': 4, 'apr': 4,
+      'may': 5,
+      'june': 6, 'jun': 6,
+      'july': 7, 'jul': 7,
+      'august': 8, 'aug': 8,
+      'september': 9, 'sep': 9,
+      'october': 10, 'oct': 10,
+      'november': 11, 'nov': 11,
+      'december': 12, 'dec': 12,
+    };
+    for (final entry in monthsMap.entries) {
+      if (RegExp('\\b${entry.key}\\b').hasMatch(lower)) {
+        targetMonth = entry.value;
+        break;
+      }
+    }
+
+    // Parse Year (e.g. "2026")
+    int? targetYear;
+    final yearRegex = RegExp(r'\b(20\d{2})\b');
+    final yearMatch = yearRegex.firstMatch(lower);
+    if (yearMatch != null) {
+      targetYear = int.tryParse(yearMatch.group(1) ?? '');
+    }
+
     // 3. Parse Time (hour and minute)
     int hour = 9; // Default: 9 AM
     int minute = 0;
@@ -163,15 +194,21 @@ class RuleBasedParser {
       }
       targetDate = targetDate.add(Duration(days: daysToAdd));
     } else if (targetDayOfMonth != null) {
-      // Set to the target day of the current month
-      // Check if it's a valid day for this month (e.g. Feb 30th)
-      final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+      final year = targetYear ?? now.year;
+      final month = targetMonth ?? now.month;
+      final daysInMonth = DateTime(year, month + 1, 0).day;
       final safeDay = targetDayOfMonth.clamp(1, daysInMonth);
       
-      targetDate = DateTime(now.year, now.month, safeDay);
-      // If the date is in the past, schedule for the next month
-      if (targetDate.isBefore(DateTime(now.year, now.month, now.day))) {
-        targetDate = DateTime(now.year, now.month + 1, safeDay);
+      targetDate = DateTime(year, month, safeDay);
+      // If we didn't specify a year and the date is in the past, push to next year
+      if (targetYear == null && targetDate.isBefore(DateTime(now.year, now.month, now.day))) {
+        targetDate = DateTime(now.year + 1, month, safeDay);
+      }
+    } else if (targetMonth != null) {
+      final year = targetYear ?? now.year;
+      targetDate = DateTime(year, targetMonth, 1);
+      if (targetYear == null && targetDate.isBefore(DateTime(now.year, now.month, now.day))) {
+        targetDate = DateTime(now.year + 1, targetMonth, 1);
       }
     }
 
@@ -185,15 +222,16 @@ class RuleBasedParser {
     );
 
     // If it's a one-time reminder and the final time is in the past for today, push to tomorrow
-    if (repeatType == 'One Time' && finalDateTime.isBefore(now) && !lower.contains('tomorrow') && targetWeekday == null && targetDayOfMonth == null) {
+    if (repeatType == 'One Time' && finalDateTime.isBefore(now) && !lower.contains('tomorrow') && targetWeekday == null && targetDayOfMonth == null && targetMonth == null) {
       finalDateTime = finalDateTime.add(const Duration(days: 1));
     }
 
     // 5. Clean Title (Extract core reminder title)
     // Create a list of patterns to remove
     final removePatterns = [
-      // Helpers
+      // Helpers & commands
       RegExp(r'\b(please\s+)?(remind\s+me\s+to|remind\s+me|wake\s+me\s+up\s+to|wake\s+me\s+up|wake\s+me\s+at|wake\s+me|set\s+an\s+alarm\s+for|alert\s+me\s+to|alert\s+me)\b', caseSensitive: false),
+      RegExp(r'\b(create\s+(a\s+)?reminder\s+(for|to|about)?|add\s+(a\s+)?reminder\s+(for|to|about)?|set\s+(a\s+)?reminder\s+(for|to|about)?|create\s+(an\s+)?alarm\s+(for)?|add\s+(an\s+)?alarm\s+(for)?|set\s+(an\s+)?alarm\s+(for)?|create|add|set)\b', caseSensitive: false),
       // Recurrence
       RegExp(r'\b(every\s+day|everyday|daily|every\s+month|monthly|every\s+year|yearly|annually)\b', caseSensitive: false),
       RegExp(r'\b(every|on|each)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?\b', caseSensitive: false),
@@ -205,8 +243,11 @@ class RuleBasedParser {
       RegExp(r'\btomorrow\b', caseSensitive: false),
       RegExp(r'\bon\s+(the\s+)?\d{1,2}(st|nd|rd|th)?(\s+every\s+month)?\b', caseSensitive: false),
       RegExp(r'\b(on|this|next)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b', caseSensitive: false),
+      RegExp(r'\b(in|on|of|for)?\s*(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b', caseSensitive: false),
+      RegExp(r'\b(20\d{2})\b', caseSensitive: false),
       // Leftovers
-      RegExp(r'\b(at|on|for|to|the)\b$', caseSensitive: false),
+      RegExp(r'^\b(at|on|for|to|the|of|about)\b', caseSensitive: false),
+      RegExp(r'\b(at|on|for|to|the|of|about)\b$', caseSensitive: false),
     ];
 
     String title = workingText;

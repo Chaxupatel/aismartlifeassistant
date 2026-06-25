@@ -22,9 +22,11 @@ abstract class AuthRepository {
 class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS
-        ? DefaultFirebaseOptions.ios.iosClientId
-        : null,
+    clientId: kIsWeb
+        ? '467878544533-lg8bicvel81519gcvmuq0b0mn2ak4u6d.apps.googleusercontent.com'
+        : (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS
+            ? DefaultFirebaseOptions.ios.iosClientId
+            : null),
   );
 
   @override

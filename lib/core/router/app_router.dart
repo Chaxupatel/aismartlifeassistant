@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 // Import presentation layer pages
 import '../../features/splash/presentation/splash_screen.dart';
@@ -33,6 +34,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     debugLogDiagnostics: true,
+    observers: [
+      FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+    ],
     routes: [
       // Splash Initial Path
       GoRoute(
@@ -116,7 +120,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const AddReminderScreen(),
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>?;
+                      return AddReminderScreen(
+                        prefilledTitle: extra?['title'] as String?,
+                        prefilledDateTime: extra?['dateTime'] as DateTime?,
+                        prefilledCategory: extra?['category'] as String?,
+                        prefilledDescription: extra?['description'] as String?,
+                      );
+                    },
                   ),
                   GoRoute(
                     path: ':id',

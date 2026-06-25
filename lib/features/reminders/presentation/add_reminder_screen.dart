@@ -12,7 +12,18 @@ import 'providers/reminders_provider.dart';
 
 /// Screen to create a new task reminder.
 class AddReminderScreen extends ConsumerStatefulWidget {
-  const AddReminderScreen({super.key});
+  final String? prefilledTitle;
+  final DateTime? prefilledDateTime;
+  final String? prefilledCategory;
+  final String? prefilledDescription;
+
+  const AddReminderScreen({
+    super.key,
+    this.prefilledTitle,
+    this.prefilledDateTime,
+    this.prefilledCategory,
+    this.prefilledDescription,
+  });
 
   @override
   ConsumerState<AddReminderScreen> createState() => _AddReminderScreenState();
@@ -20,8 +31,8 @@ class AddReminderScreen extends ConsumerStatefulWidget {
 
 class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descController;
   String _selectedCategory = 'General';
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
@@ -35,6 +46,22 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
   final List<String> _categories = ['General', 'Work', 'Health', 'Personal', 'Shopping'];
   final List<int> _snoozeOptions = [5, 10, 15, 30];
   final List<String> _repeatTypes = ['One Time', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.prefilledTitle ?? '');
+    _descController = TextEditingController(text: widget.prefilledDescription ?? '');
+    
+    if (widget.prefilledCategory != null && _categories.contains(widget.prefilledCategory)) {
+      _selectedCategory = widget.prefilledCategory!;
+    }
+    
+    if (widget.prefilledDateTime != null) {
+      _selectedDate = widget.prefilledDateTime!;
+      _selectedTime = TimeOfDay.fromDateTime(widget.prefilledDateTime!);
+    }
+  }
 
   @override
   void dispose() {

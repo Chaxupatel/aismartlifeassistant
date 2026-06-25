@@ -118,126 +118,151 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
       curve: Curves.easeOut,
       child: GradientBackground(
         useSafeArea: false,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Elastic scale logo container
-              ScaleTransition(
-                scale: Tween<double>(begin: 0.5, end: 1.0).animate(_logoScale),
-                child: FadeTransition(
-                  opacity: _logoFade,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(isDark ? 0.35 : 0.2),
-                          blurRadius: 48,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: GlassContainer(
-                      width: 140,
-                      height: 140,
-                      borderRadius: 36,
-                      blur: 25,
-                      opacity: isDark ? 0.15 : 0.25,
-                      color: isDark ? Colors.black : Colors.white,
-                      borderColor: isDark ? Colors.white24 : Colors.black12,
-                      child: Stack(
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 70,
-                              height: 70,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: AppColors.primaryGradient,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.5),
-                                    blurRadius: 24,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.white,
-                                size: 36,
-                              ),
+        child: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Elastic scale logo container
+                  ScaleTransition(
+                    scale: Tween<double>(begin: 0.5, end: 1.0).animate(_logoScale),
+                    child: FadeTransition(
+                      opacity: _logoFade,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(isDark ? 0.35 : 0.2),
+                              blurRadius: 48,
+                              spreadRadius: 2,
                             ),
-                          ),
-                          // Animate shine sweep line via ShaderMask
-                          AnimatedBuilder(
-                            animation: _shineOffset,
-                            builder: (context, child) {
-                              return Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(36),
-                                  child: ShaderMask(
-                                    blendMode: BlendMode.srcATop,
-                                    shaderCallback: (bounds) {
-                                      return LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: const [
-                                          Colors.transparent,
-                                          Color(0x3BFFFFFF),
-                                          Colors.transparent,
-                                        ],
-                                        stops: [
-                                          (_shineOffset.value - 0.25).clamp(0.0, 1.0),
-                                          _shineOffset.value.clamp(0.0, 1.0),
-                                          (_shineOffset.value + 0.25).clamp(0.0, 1.0),
-                                        ],
-                                      ).createShader(bounds);
-                                    },
-                                    child: Container(color: Colors.transparent),
+                          ],
+                        ),
+                        child: GlassContainer(
+                          width: 140,
+                          height: 140,
+                          borderRadius: 36,
+                          blur: 25,
+                          opacity: isDark ? 0.15 : 0.25,
+                          color: isDark ? Colors.black : Colors.white,
+                          borderColor: isDark ? Colors.white24 : Colors.black12,
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Container(
+                                  width: 70,
+                                  height: 70,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: AppColors.primaryGradient,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary.withOpacity(0.5),
+                                        blurRadius: 24,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome,
+                                    color: Colors.white,
+                                    size: 36,
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                              // Animate shine sweep line via ShaderMask
+                              AnimatedBuilder(
+                                animation: _shineOffset,
+                                builder: (context, child) {
+                                  return Positioned.fill(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(36),
+                                      child: ShaderMask(
+                                        blendMode: BlendMode.srcATop,
+                                        shaderCallback: (bounds) {
+                                          return LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: const [
+                                              Colors.transparent,
+                                              Color(0x3BFFFFFF),
+                                              Colors.transparent,
+                                            ],
+                                            stops: [
+                                              (_shineOffset.value - 0.25).clamp(0.0, 1.0),
+                                              _shineOffset.value.clamp(0.0, 1.0),
+                                              (_shineOffset.value + 0.25).clamp(0.0, 1.0),
+                                            ],
+                                          ).createShader(bounds);
+                                        },
+                                        child: Container(color: Colors.transparent),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              
-              // App Name branding text
-              FadeTransition(
-                opacity: _textFade,
-                child: Text(
-                  AppStrings.appName,
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1.2,
+                  const SizedBox(height: 40),
+                  
+                  // App Name branding text
+                  FadeTransition(
+                    opacity: _textFade,
+                    child: Text(
+                      AppStrings.appName,
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.2,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  
+                  // App Tagline
+                  FadeTransition(
+                    opacity: _taglineFade,
+                    child: Text(
+                      'Your AI-Powered Life Assistant',
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              
-              // App Tagline
-              FadeTransition(
+            ),
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: FadeTransition(
                 opacity: _taglineFade,
-                child: Text(
-                  'Your AI-Powered Life Assistant',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
+                child: Center(
+                  child: Text(
+                    'Version ${AppStrings.appVersion}',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextSecondary.withValues(alpha: 0.5)
+                          : AppColors.lightTextSecondary.withValues(alpha: 0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

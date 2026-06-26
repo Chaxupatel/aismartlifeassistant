@@ -7,6 +7,9 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../../core/widgets/ad_banner_widget.dart';
+import '../../../core/services/app_open_ad_manager.dart';
+import '../../../main.dart';
 
 /// An upgraded, premium splash screen displaying application branding.
 /// Animates logo entry (bounce-scale and fade-in), runs a loop specular reflection shine
@@ -75,29 +78,87 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
     // Kick off entrance
     _entranceController.forward();
 
-    // Wait for Firebase Auth to restore the persisted session, then navigate.
-    // We wait at least 2.6 s for the entrance animation to complete, but also
-    // wait for the first authStateChanges emission so we never read a stale
-    // null before Firebase has finished restoring the cached credential.
-    Timer(const Duration(milliseconds: 2600), () {
-      if (!mounted) return;
-      setState(() => _exitOpacity = 0.0);
-      Timer(const Duration(milliseconds: 350), () async {
-        if (!mounted) return;
-        // authStateChanges always emits immediately with the current user
-        // (null if not signed in, or the restored User if a session exists).
-        final user = await ref
-            .read(authRepositoryProvider)
-            .authStateChanges
-            .first;
-        if (!mounted) return;
-        if (user != null) {
-          context.go('/home');
-        } else {
-          context.go('/onboarding');
+    // Load App Open Ad and execute splash sequence
+    _exitSplashSequence();
+  }
+
+  Future<void> _exitSplashSequence() async {
+    final startTime = DateTime.now();
+
+    // 1. Wait for background initialization tasks in main.dart to complete
+    try {
+      await appInitializationCompleter.future;
+    } catch (e) {
+      debugPrint('Initialization error awaited during splash: $e');
+    }
+
+    // 2. Start preloading the App Open Ad immediately
+    AppOpenAdManager.instance.loadAd();
+
+    // 3. Ensure the premium logo and shine entrance animations play for at least 2600ms
+    final elapsedTime = DateTime.now().difference(startTime).inMilliseconds;
+    final remainingTime = 2600 - elapsedTime;
+    if (remainingTime > 0) {
+      await Future.delayed(Duration(milliseconds: remainingTime));
+    }
+    if (!mounted) return;
+
+    // 4. Check if the App Open ad has already finished loading
+    if (AppOpenAdManager.instance.isAdAvailable) {
+      AppOpenAdManager.instance.showAdIfAvailable(
+        onAdDismissed: () {
+          _proceedToNextScreen();
+        },
+      );
+    } else {
+      // 5. Ad is not loaded yet. Wait a bit longer (up to an additional 2000ms)
+      // to give it a chance to load. We check every 200ms.
+      int elapsed = 0;
+      const checkInterval = 200;
+      const maxWait = 2000;
+      bool adLoaded = false;
+
+      while (elapsed < maxWait && !adLoaded && mounted) {
+        await Future.delayed(const Duration(milliseconds: checkInterval));
+        elapsed += checkInterval;
+        if (AppOpenAdManager.instance.isAdAvailable) {
+          adLoaded = true;
+          break;
         }
-      });
-    });
+      }
+
+      if (adLoaded && mounted) {
+        AppOpenAdManager.instance.showAdIfAvailable(
+          onAdDismissed: () {
+            _proceedToNextScreen();
+          },
+        );
+      } else {
+        // Timeout reached or widget unmounted, proceed directly
+        _proceedToNextScreen();
+      }
+    }
+  }
+
+  Future<void> _proceedToNextScreen() async {
+    if (!mounted) return;
+    setState(() => _exitOpacity = 0.0);
+    
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return;
+
+    // authStateChanges always emits immediately with the current user
+    // (null if not signed in, or the restored User if a session exists).
+    final user = await ref
+        .read(authRepositoryProvider)
+        .authStateChanges
+        .first;
+    if (!mounted) return;
+    if (user != null) {
+      context.go('/home');
+    } else {
+      context.go('/onboarding');
+    }
   }
 
   @override
@@ -109,6 +170,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
 
   @override
   Widget build(BuildContext context) {
+    // Trigger preloading of the global adaptive banner ad early so it is fully loaded
+    // and ready to display immediately when the user reaches the Home screen dashboard.
+    ref.read(globalAdProvider.notifier).preloadAd(context);
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

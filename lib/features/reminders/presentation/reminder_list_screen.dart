@@ -157,7 +157,7 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                     padding: const EdgeInsets.only(
                       left: AppSizes.m,
                       right: AppSizes.m,
-                      bottom: 120, // Avoid bottom navigation overlap
+                      bottom: 190, // Avoid bottom navigation and ad overlap
                     ),
                     itemCount: filteredReminders.length,
                     itemBuilder: (context, index) {

@@ -1,30 +1,121 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+// Google's official Test Ad Unit IDs for Adaptive Banners
+final String _globalAdUnitId = kIsWeb
+    ? ''
+    : Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/9214589741' // Android Adaptive Test Banner ID
+        : 'ca-app-pub-3940256099942544/2435281174'; // iOS Adaptive Test Banner ID
+
+/// State class for globally managed ad preloading.
+class GlobalAdState {
+  final BannerAd? bannerAd;
+  final bool isLoaded;
+  final bool isFailed;
+  final AdSize? adSize;
+
+  GlobalAdState({
+    this.bannerAd,
+    this.isLoaded = false,
+    this.isFailed = false,
+    this.adSize,
+  });
+
+  GlobalAdState copyWith({
+    BannerAd? bannerAd,
+    bool? isLoaded,
+    bool? isFailed,
+    AdSize? adSize,
+  }) {
+    return GlobalAdState(
+      bannerAd: bannerAd ?? this.bannerAd,
+      isLoaded: isLoaded ?? this.isLoaded,
+      isFailed: isFailed ?? this.isFailed,
+      adSize: adSize ?? this.adSize,
+    );
+  }
+}
+
+/// Notifier that manages the lifecycle of the preloaded global ad.
+class GlobalAdNotifier extends Notifier<GlobalAdState> {
+  @override
+  GlobalAdState build() => GlobalAdState();
+
+  bool _isPreloading = false;
+
+  Future<void> preloadAd(BuildContext context, {bool force = false}) async {
+    if (kIsWeb) return;
+
+    final mediaQuery = MediaQuery.of(context);
+    final width = mediaQuery.size.width.truncate();
+    final orientation = mediaQuery.orientation;
+
+    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(orientation, width);
+    if (size == null) {
+      return;
+    }
+
+    // Prevent duplicate preload requests if already loading/loaded with same size
+    if (!force && (_isPreloading || (state.isLoaded && state.adSize == size))) {
+      return;
+    }
+
+    _isPreloading = true;
+
+    // Dispose previous ad instance before loading a new one
+    state.bannerAd?.dispose();
+    state = GlobalAdState(adSize: size, isFailed: false);
+
+    final bannerAd = BannerAd(
+      adUnitId: _globalAdUnitId,
+      request: const AdRequest(),
+      size: size,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          state = state.copyWith(
+            bannerAd: ad as BannerAd,
+            isLoaded: true,
+            isFailed: false,
+          );
+          _isPreloading = false;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Preloaded Ad failed to load: $err');
+          ad.dispose();
+          state = state.copyWith(
+            bannerAd: null,
+            isLoaded: false,
+            isFailed: true,
+            adSize: null,
+          );
+          _isPreloading = false;
+        },
+      ),
+    );
+
+    bannerAd.load();
+  }
+}
+
+/// Global provider to access and load the AdMob banner ad.
+final globalAdProvider = NotifierProvider<GlobalAdNotifier, GlobalAdState>(GlobalAdNotifier.new);
+
 /// A reusable widget that loads and renders an Anchored Adaptive AdMob banner ad.
-/// Automatically calculates screen dimensions and handles lifecycle events.
-class AdBannerWidget extends StatefulWidget {
+/// Reads from [globalAdProvider] to support preloaded ads with zero transition delay.
+class AdBannerWidget extends ConsumerStatefulWidget {
   const AdBannerWidget({super.key});
 
   @override
-  State<AdBannerWidget> createState() => _AdBannerWidgetState();
+  ConsumerState<AdBannerWidget> createState() => _AdBannerWidgetState();
 }
 
-class _AdBannerWidgetState extends State<AdBannerWidget> {
-  BannerAd? _bannerAd;
-  bool _isAdLoaded = false;
-  AdSize? _adSize;
+class _AdBannerWidgetState extends ConsumerState<AdBannerWidget> {
   Orientation? _currentOrientation;
   double? _currentWidth;
-
-  // Google's official Test Ad Unit IDs for Adaptive Banners
-  final String _adUnitId = kIsWeb
-      ? ''
-      : Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/9214589741' // Android Adaptive Test Banner ID
-          : 'ca-app-pub-3940256099942544/2435281174'; // iOS Adaptive Test Banner ID
 
   @override
   void didChangeDependencies() {
@@ -34,71 +125,120 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
       if (mediaQuery.orientation != _currentOrientation || mediaQuery.size.width != _currentWidth) {
         _currentOrientation = mediaQuery.orientation;
         _currentWidth = mediaQuery.size.width;
-        _calculateAdSize();
+        
+        // Re-preload the ad if orientation or screen width changes (force update size)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref.read(globalAdProvider.notifier).preloadAd(context, force: true);
+          }
+        });
       }
     }
   }
 
-  Future<void> _calculateAdSize() async {
-    final width = _currentWidth!.truncate();
-    final orientation = _currentOrientation!;
-
-    // Get the anchored adaptive ad size
-    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(orientation, width);
-    if (size != null && mounted) {
-      setState(() {
-        _adSize = size;
-      });
-      _loadAd();
-    }
-  }
-
-  void _loadAd() {
-    if (_adSize == null) return;
-
-    // Clean up any existing ad before loading a new one
-    _bannerAd?.dispose();
-    _isAdLoaded = false;
-
-    _bannerAd = BannerAd(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
-      size: _adSize!,
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          if (!mounted) {
-            ad.dispose();
-            return;
-          }
-          setState(() {
-            _isAdLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, err) {
-          debugPrint('AdBannerWidget failed to load: $err');
-          ad.dispose();
-        },
+  Widget _buildPlaceholder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08),
+          width: 1,
+        ),
       ),
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
+      child: const Center(
+        child: _AdShimmerLoader(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb || !_isAdLoaded || _bannerAd == null || _adSize == null) {
+    if (kIsWeb) return const SizedBox.shrink();
+
+    final adState = ref.watch(globalAdProvider);
+
+    // If ad loading failed or size hasn't been computed, collapse space
+    if (adState.isFailed || adState.adSize == null) {
       return const SizedBox.shrink();
     }
 
     return Container(
       alignment: Alignment.center,
-      width: _adSize!.width.toDouble(),
-      height: _adSize!.height.toDouble(),
-      child: AdWidget(ad: _bannerAd!),
+      width: adState.adSize!.width.toDouble(),
+      height: adState.adSize!.height.toDouble(),
+      child: adState.isLoaded && adState.bannerAd != null
+          ? AdWidget(ad: adState.bannerAd!)
+          : _buildPlaceholder(context), // Pre-reserved space with shimmer loading UI
+    );
+  }
+}
+
+class _AdShimmerLoader extends StatefulWidget {
+  const _AdShimmerLoader();
+
+  @override
+  State<_AdShimmerLoader> createState() => _AdShimmerLoaderState();
+}
+
+class _AdShimmerLoaderState extends State<_AdShimmerLoader> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _opacityAnimation = Tween<double>(begin: 0.25, end: 0.6).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white38 : Colors.black38;
+
+    return AnimatedBuilder(
+      animation: _opacityAnimation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacityAnimation.value,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.ads_click_rounded,
+                size: 16,
+                color: textColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Sponsored',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

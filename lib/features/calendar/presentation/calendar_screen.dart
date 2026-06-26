@@ -350,7 +350,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               padding: const EdgeInsets.only(
                 left: AppSizes.m,
                 right: AppSizes.m,
-                bottom: 120, // Avoid navigation overlap
+                bottom: 190, // Avoid navigation and ad overlap
               ),
               children: [
                 // 1. DAILY REMINDERS

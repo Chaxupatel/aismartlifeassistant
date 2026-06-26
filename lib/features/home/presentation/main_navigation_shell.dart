@@ -11,10 +11,7 @@ import '../../../core/widgets/ad_banner_widget.dart';
 class MainNavigationShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const MainNavigationShell({
-    super.key,
-    required this.navigationShell,
-  });
+  const MainNavigationShell({super.key, required this.navigationShell});
 
   void _onTap(BuildContext context, int index) {
     navigationShell.goBranch(
@@ -29,68 +26,76 @@ class MainNavigationShell extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      extendBody: true, // Required so page contents draw under the floating glass capsule
-      body: navigationShell,
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.only(bottom: AppSizes.l), // Raised slightly higher
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (navigationShell.currentIndex == 0) ...[
-              const AdBannerWidget(),
-              const SizedBox(height: 2), // Spacing between the ad and the navigation capsule
-            ],
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
-              child: GlassContainer(
-                padding: const EdgeInsets.symmetric(vertical: AppSizes.s + 4),
-                borderRadius: 30, // Capsule shape
-                blur: 24,
-                opacity: isDark ? 0.12 : 0.22,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? const Color(0x22FFFFFF) : const Color(0x44FFFFFF),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  context,
-                  index: 0,
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 1,
-                  icon: Icons.calendar_month_rounded,
-                  label: 'Calendar',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 2,
-                  icon: Icons.check_circle_outline_rounded,
-                  label: 'Reminders',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 3,
-                  icon: Icons.event_note_rounded,
-                  label: 'Events',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 4,
-                  icon: Icons.person_outline_rounded,
-                  label: 'Profile',
-                ),
-              ],
+      resizeToAvoidBottomInset: false, // Keep navigation capsule below keyboard
+      body: Stack(
+        children: [
+          navigationShell,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
+                    child: GlassContainer(
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.s + 4),
+                      borderRadius: 30, // Capsule shape
+                      blur: 24,
+                      opacity: isDark ? 0.12 : 0.22,
+                      color: isDark ? Colors.black : Colors.white,
+                      borderColor: isDark
+                          ? const Color(0x22FFFFFF)
+                          : const Color(0x44FFFFFF),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildNavItem(
+                            context,
+                            index: 0,
+                            icon: Icons.home_rounded,
+                            label: 'Home',
+                          ),
+                          _buildNavItem(
+                            context,
+                            index: 1,
+                            icon: Icons.calendar_month_rounded,
+                            label: 'Calendar',
+                          ),
+                          _buildNavItem(
+                            context,
+                            index: 2,
+                            icon: Icons.check_circle_outline_rounded,
+                            label: 'Reminders',
+                          ),
+                          _buildNavItem(
+                            context,
+                            index: 3,
+                            icon: Icons.event_note_rounded,
+                            label: 'Events',
+                          ),
+                          _buildNavItem(
+                            context,
+                            index: 4,
+                            icon: Icons.person_outline_rounded,
+                            label: 'Profile',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const AdBannerWidget(),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  ),
-);
-}
+        ],
+      ),
+    );
+  }
 
   Widget _buildNavItem(
     BuildContext context, {
@@ -136,10 +141,10 @@ class MainNavigationShell extends StatelessWidget {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: activeColor.withOpacity(0.6),
+                          color: activeColor.withValues(alpha: 0.6),
                           blurRadius: 8,
                           spreadRadius: 1,
-                        )
+                        ),
                       ]
                     : null,
               ),

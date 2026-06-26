@@ -325,7 +325,7 @@ class ProfileScreen extends ConsumerWidget {
           left: AppSizes.m,
           right: AppSizes.m,
           top: AppSizes.m,
-          bottom: 100, // Margin to prevent overlap with bottom navigation bar
+          bottom: 190, // Margin to prevent overlap with bottom navigation bar and ad
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

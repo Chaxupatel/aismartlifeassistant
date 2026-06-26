@@ -290,7 +290,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                     padding: const EdgeInsets.only(
                       left: AppSizes.m,
                       right: AppSizes.m,
-                      bottom: 120, // Prevents bottom navigation overlap
+                      bottom: 190, // Prevents bottom navigation and ad overlap
                     ),
                     itemCount: sortedEvents.length,
                     itemBuilder: (context, index) {

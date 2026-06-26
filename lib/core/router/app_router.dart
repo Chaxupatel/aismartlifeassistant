@@ -28,6 +28,47 @@ import 'package:alarm/alarm.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
 
+/// Lazy navigator observer for Firebase Analytics to prevent eager dependency crash on boot
+final lazyAnalyticsObserver = LazyFirebaseAnalyticsObserver();
+
+class LazyFirebaseAnalyticsObserver extends NavigatorObserver {
+  FirebaseAnalyticsObserver? _delegate;
+
+  void initialize() {
+    _delegate = FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance);
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _delegate?.didPush(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _delegate?.didPop(route, previousRoute);
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _delegate?.didRemove(route, previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    _delegate?.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+  }
+
+  @override
+  void didStartUserGesture(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _delegate?.didStartUserGesture(route, previousRoute);
+  }
+
+  @override
+  void didStopUserGesture() {
+    _delegate?.didStopUserGesture();
+  }
+}
+
 /// Provider exposing the configured [GoRouter] setup to the application.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -35,7 +76,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     debugLogDiagnostics: true,
     observers: [
-      FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+      lazyAnalyticsObserver,
     ],
     routes: [
       // Splash Initial Path

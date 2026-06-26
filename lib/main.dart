@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,54 +12,18 @@ import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
 
+import 'core/services/app_open_ad_manager.dart';
 import 'firebase_options.dart';
 
+/// Global flag and completer to coordinate startup loading with the Splash Screen
+bool isAppInitialized = false;
+final Completer<void> appInitializationCompleter = Completer<void>();
+
 /// Entry point of the AI Smart Life Assistant application.
-void main() async {
+void main() {
   // Ensure widget bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the Mobile Ads SDK
-  await MobileAds.instance.initialize();
-
-  // Initialize Firebase Core services
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Configure Firebase Crashlytics
-  if (!kIsWeb) {
-    // Pass all uncaught "fatal" errors from the framework to Crashlytics
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-
-    // Disable Crashlytics collection in debug mode to avoid cluttering logs
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-
-    // Disable Analytics collection in debug mode to avoid cluttering logs
-    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
-  }
-
-  // Initialize Hive local storage
-  await Hive.initFlutter();
-  
-  // Open the reminders and settings boxes asynchronously
-  await Hive.openBox<Map>('reminders_box');
-  await Hive.openBox('settings_box');
-
-  // Initialize Notification Service for local notifications & alarms
-  final notificationService = NotificationService();
-  await notificationService.init();
-  await notificationService.requestPermissions();
-
-  // Initialize Alarm package
-  await Alarm.init();
-  
   runApp(
     // ProviderScope is required to store the state of all Riverpod providers
     const ProviderScope(
@@ -79,11 +44,67 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Listen for alarms ringing
-    Alarm.ringStream.stream.listen((alarmSettings) {
-      // Navigate to alarm ring screen when alarm triggers
-      ref.read(appRouterProvider).push('/alarm-ring', extra: alarmSettings);
-    });
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    try {
+      // Initialize independent services in parallel to speed up app boot time dramatically
+      await Future.wait([
+        MobileAds.instance.initialize().then((_) {
+          AppOpenAdManager.instance.initializeLifecycleListener();
+          AppOpenAdManager.instance.loadAd();
+        }),
+        Hive.initFlutter().then((_) => Future.wait([
+          Hive.openBox<Map>('reminders_box'),
+          Hive.openBox('settings_box'),
+        ])),
+        Alarm.init(),
+        Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ).then((_) async {
+          // Initialize our lazy analytics observer now that Firebase is running
+          lazyAnalyticsObserver.initialize();
+
+          if (!kIsWeb) {
+            // Pass all uncaught "fatal" errors from the framework to Crashlytics
+            FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+            // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+            PlatformDispatcher.instance.onError = (error, stack) {
+              FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+              return true;
+            };
+
+            // Disable Crashlytics collection in debug mode to avoid cluttering logs
+            await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+
+            // Disable Analytics collection in debug mode to avoid cluttering logs
+            await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
+          }
+          // Initialize NotificationService (FCM) after Firebase app is ready
+          final service = NotificationService();
+          await service.init();
+          await service.requestPermissions();
+        }),
+      ]);
+
+      // Listen for alarms ringing
+      Alarm.ringStream.stream.listen((alarmSettings) {
+        // Navigate to alarm ring screen when alarm triggers
+        ref.read(appRouterProvider).push('/alarm-ring', extra: alarmSettings);
+      });
+
+      isAppInitialized = true;
+      if (!appInitializationCompleter.isCompleted) {
+        appInitializationCompleter.complete();
+      }
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+      if (!appInitializationCompleter.isCompleted) {
+        appInitializationCompleter.completeError(e);
+      }
+    }
   }
 
   @override

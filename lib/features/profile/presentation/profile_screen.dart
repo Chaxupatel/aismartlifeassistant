@@ -7,6 +7,7 @@ import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../../../core/widgets/custom_textfield.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import 'help_support_dialog.dart';
 
 /// Screen presenting user profile details, allowing name/password editing, and handling authentication sign out.
 class ProfileScreen extends ConsumerWidget {
@@ -42,6 +43,7 @@ class ProfileScreen extends ConsumerWidget {
               backgroundColor: Colors.transparent,
               child: GlassContainer(
                 blur: 24,
+                forceBlur: true,
                 opacity: isDark ? 0.08 : 0.85,
                 color: isDark ? Colors.black : Colors.white,
                 borderColor: isDark ? Colors.white10 : Colors.black12,
@@ -109,6 +111,7 @@ class ProfileScreen extends ConsumerWidget {
                                   (value == null || value.isEmpty)) {
                                 return 'Enter your current password to change it';
                               }
+                              return null;
                             },
                           ),
                           if (authErrorMessage != null)
@@ -178,7 +181,7 @@ class ProfileScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(AppSizes.m),
                             decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -358,7 +361,7 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           radius: 44,
-                          backgroundColor: AppColors.primary.withOpacity(0.2),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                           child: const Icon(
                             Icons.person_rounded,
                             size: 48,
@@ -426,7 +429,13 @@ class ProfileScreen extends ConsumerWidget {
                       context,
                       icon: Icons.help_outline_rounded,
                       title: 'Help & Support',
-                      onTap: () {},
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: true,
+                          builder: (dialogContext) => HelpSupportDialog(isDark: isDark),
+                        );
+                      },
                     ),
                     const Divider(height: 1),
                     _buildProfileTile(

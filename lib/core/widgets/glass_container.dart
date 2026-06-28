@@ -16,11 +16,12 @@ class GlassContainer extends StatelessWidget {
   final double? width;
   final double? height;
   final AlignmentGeometry? alignment;
+  final bool forceBlur;
 
   const GlassContainer({
     super.key,
     required this.child,
-    this.blur = 20.0,
+    this.blur = 0.0, // Default to 0.0 to prevent GPU rendering lag on static cards
     this.opacity = 0.08,
     this.color = Colors.white,
     this.borderColor = const Color(0x3BFFFFFF),
@@ -30,12 +31,63 @@ class GlassContainer extends StatelessWidget {
     this.width,
     this.height,
     this.alignment,
+    this.forceBlur = false, // If true, forces rendering of BackdropFilter (e.g. for floating panels)
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // BackdropFilter is computationally expensive and causes list lag.
+    // We only apply active blur if forceBlur is true or explicit blur is set.
+    final double activeBlur = forceBlur ? (blur > 0.0 ? blur : 20.0) : 0.0;
+
+    final Widget contentStack = Stack(
+      children: [
+        // Translucent gradient backing
+        Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: color.withOpacity(opacity),
+            borderRadius: BorderRadius.circular(borderRadius),
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(opacity + (isDark ? 0.05 : 0.15)),
+                color.withOpacity(opacity),
+                color.withOpacity(opacity * 0.3),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(
+              color: isDark ? const Color(0x22FFFFFF) : const Color(0x55FFFFFF),
+              width: 1.2,
+            ),
+          ),
+          child: child,
+        ),
+        // Diagonal specular glass reflection overlay
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0x2BFFFFFF), // Specular light highlight
+                    Color(0x00FFFFFF), // Fades to zero
+                  ],
+                  stops: [0.0, 0.4],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
 
     return Container(
       width: width,
@@ -56,54 +108,12 @@ class GlassContainer extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: Stack(
-            children: [
-              // Translucent gradient backing
-              Container(
-                padding: padding,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(opacity),
-                  borderRadius: BorderRadius.circular(borderRadius),
-                  gradient: LinearGradient(
-                    colors: [
-                      color.withOpacity(opacity + (isDark ? 0.05 : 0.15)),
-                      color.withOpacity(opacity),
-                      color.withOpacity(opacity * 0.3),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(
-                    color: isDark ? const Color(0x22FFFFFF) : const Color(0x55FFFFFF),
-                    width: 1.2,
-                  ),
-                ),
-                child: child,
-              ),
-              // Diagonal specular glass reflection overlay
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(borderRadius),
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0x2BFFFFFF), // Specular light highlight
-                          Color(0x00FFFFFF), // Fades to zero
-                        ],
-                        stops: [0.0, 0.4],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: activeBlur > 0.0
+            ? BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: activeBlur, sigmaY: activeBlur),
+                child: contentStack,
+              )
+            : contentStack,
       ),
     );
   }

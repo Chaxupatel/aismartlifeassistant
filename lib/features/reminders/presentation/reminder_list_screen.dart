@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
+import '../../../core/widgets/glass_native_ad_widget.dart';
 import 'providers/reminders_provider.dart';
 
 /// Screen listing all tasks and reminders.
@@ -19,6 +20,21 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
   String _searchQuery = '';
   final Set<String> _selectedIds = {};
   bool _isSelectionMode = false;
+
+  int get _adInterval => 5;
+
+  int _getListItemCount(int remindersCount) {
+    if (remindersCount == 0) return 0;
+    return remindersCount + (remindersCount / _adInterval).floor();
+  }
+
+  bool _isAdIndex(int index) {
+    return (index + 1) % (_adInterval + 1) == 0;
+  }
+
+  int _getReminderIndex(int index) {
+    return index - (index / (_adInterval + 1)).floor();
+  }
 
   void _toggleSelection(String id) {
     setState(() {
@@ -159,9 +175,13 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                       right: AppSizes.m,
                       bottom: 190, // Avoid bottom navigation and ad overlap
                     ),
-                    itemCount: filteredReminders.length,
+                    itemCount: _getListItemCount(filteredReminders.length),
                     itemBuilder: (context, index) {
-                      final reminder = filteredReminders[index];
+                      if (_isAdIndex(index)) {
+                        return GlassNativeAdWidget.small();
+                      }
+                      final reminderIndex = _getReminderIndex(index);
+                      final reminder = filteredReminders[reminderIndex];
                       final isSelected = _selectedIds.contains(reminder.id);
                       
                       return GestureDetector(
@@ -311,7 +331,7 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
             Positioned(
               left: AppSizes.m,
               right: AppSizes.m,
-              bottom: 50, // Pushed further down
+              bottom: 155, // Positioned safely above the glass navigation capsule and ad banner
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

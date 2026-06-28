@@ -44,11 +44,12 @@ class MainNavigationShell extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: AppSizes.s + 4),
                       borderRadius: 30, // Capsule shape
                       blur: 24,
-                      opacity: isDark ? 0.12 : 0.22,
-                      color: isDark ? Colors.black : Colors.white,
+                      forceBlur: true,
+                      opacity: isDark ? 0.18 : 0.55,
+                      color: Colors.white, // White backdrop creates a beautiful frosty/milky glass sheen
                       borderColor: isDark
-                          ? const Color(0x22FFFFFF)
-                          : const Color(0x44FFFFFF),
+                          ? const Color(0x44FFFFFF) // Sharper border outline in dark mode
+                          : const Color(0x66FFFFFF),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [

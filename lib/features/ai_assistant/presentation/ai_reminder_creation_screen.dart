@@ -292,16 +292,6 @@ class _AIReminderCreationScreenState extends ConsumerState<AIReminderCreationScr
                             fontSize: 11,
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.mic_none_rounded, color: AppColors.primary),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Speech input placeholder. Type your query instead!'),
-                              ),
-                            );
-                          },
-                        ),
                       ],
                     ),
                   ],

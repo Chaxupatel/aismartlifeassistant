@@ -13,6 +13,7 @@ import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
 
 import 'core/services/app_open_ad_manager.dart';
+import 'core/services/remote_config_service.dart';
 import 'firebase_options.dart';
 
 /// Global flag and completer to coordinate startup loading with the Splash Screen
@@ -65,6 +66,9 @@ class _MyAppState extends ConsumerState<MyApp> {
         ).then((_) async {
           // Initialize our lazy analytics observer now that Firebase is running
           lazyAnalyticsObserver.initialize();
+
+          // Initialize Remote Config values dynamically
+          await ref.read(remoteConfigServiceProvider).initialize();
 
           if (!kIsWeb) {
             // Pass all uncaught "fatal" errors from the framework to Crashlytics

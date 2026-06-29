@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
+import '../../../core/services/version_check_service.dart';
 import 'providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -74,7 +75,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           insetPadding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.xl),
           child: GlassContainer(
             blur: 24,
-            opacity: isDark ? 0.15 : 0.25,
+            forceBlur: true,
+            opacity: isDark ? 0.90 : 0.95,
             color: isDark ? Colors.black : Colors.white,
             borderColor: isDark ? Colors.white24 : Colors.black12,
             padding: const EdgeInsets.all(AppSizes.l),
@@ -142,56 +144,222 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  void _checkForUpdates() {
+  void _checkForUpdates() async {
+    // Show a glassy loading indicator
     showDialog(
       context: context,
-      builder: (context) {
+      barrierDismissible: false,
+      builder: (dialogContext) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Dialog(
           backgroundColor: Colors.transparent,
           child: GlassContainer(
-            blur: 24,
-            opacity: isDark ? 0.15 : 0.25,
+            blur: 20,
+            forceBlur: true,
+            opacity: isDark ? 0.90 : 0.95,
             color: isDark ? Colors.black : Colors.white,
-            borderColor: isDark ? Colors.white24 : Colors.black12,
             padding: const EdgeInsets.all(AppSizes.l),
-            child: Column(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle_outline_rounded, color: AppColors.success, size: 48),
-                const SizedBox(height: AppSizes.m),
-                Text(
-                  'System Up to Date',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.s),
-                Text(
-                  'You are running the latest version of AI Smart Life Assistant (v1.0.0).',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.l),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done', style: TextStyle(color: Colors.white)),
-                ),
+                CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary)),
+                SizedBox(width: 16),
+                Text('Checking for updates...', style: TextStyle(fontWeight: FontWeight.w500)),
               ],
             ),
           ),
         );
       },
     );
+
+    try {
+      final updateInfo = await ref.read(versionCheckServiceProvider).checkForUpdates();
+      
+      // Close the loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      if (!mounted) return;
+
+      if (updateInfo.hasUpdate) {
+        // Show Update Available dialog
+        showDialog(
+          context: context,
+          barrierDismissible: !updateInfo.forceUpdate,
+          builder: (dialogContext) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return PopScope(
+              canPop: !updateInfo.forceUpdate,
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                child: GlassContainer(
+                  blur: 24,
+                  forceBlur: true,
+                  opacity: isDark ? 0.90 : 0.95,
+                  color: isDark ? Colors.black : Colors.white,
+                  borderColor: isDark ? Colors.white24 : Colors.black12,
+                  padding: const EdgeInsets.all(AppSizes.l),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.system_update_alt_rounded,
+                            color: updateInfo.forceUpdate ? AppColors.error : AppColors.primary,
+                            size: 40,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            updateInfo.forceUpdate ? 'Critical Update!' : 'Update Available',
+                            style: TextStyle(
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSizes.m),
+                      Text(
+                        'A newer version is ready for you.\n'
+                        '• Latest: v${updateInfo.latestVersion}\n'
+                        '• Current: v${updateInfo.localVersion}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.m),
+                      const Text(
+                        'Release Notes:',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        constraints: const BoxConstraints(maxHeight: 120),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: SingleChildScrollView(
+                          child: Text(
+                            updateInfo.releaseNotes,
+                            style: TextStyle(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.l),
+                      Row(
+                        children: [
+                          if (!updateInfo.forceUpdate) ...[
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  side: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+                                ),
+                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                child: Text(
+                                  'Later',
+                                  style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: () {
+                                ref.read(versionCheckServiceProvider).launchUpdateUrl(updateInfo.updateUrl);
+                                if (!updateInfo.forceUpdate) {
+                                  Navigator.of(dialogContext).pop();
+                                }
+                              },
+                              child: const Text('Update Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        // Show "System Up to Date" dialog
+        showDialog(
+          context: context,
+          builder: (dialogContext) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: GlassContainer(
+                blur: 24,
+                forceBlur: true,
+                opacity: isDark ? 0.90 : 0.95,
+                color: isDark ? Colors.black : Colors.white,
+                borderColor: isDark ? Colors.white24 : Colors.black12,
+                padding: const EdgeInsets.all(AppSizes.l),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded, color: AppColors.success, size: 48),
+                    const SizedBox(height: AppSizes.m),
+                    Text(
+                      'System Up to Date',
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.s),
+                    Text(
+                      'You are running the latest version of AI Smart Life Assistant (v${updateInfo.localVersion}).',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.l),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Done', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking for updates: $e')),
+        );
+      }
+    }
   }
 
   // --- RENDER WIDGETS ---

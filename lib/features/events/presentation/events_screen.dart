@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
+import '../../../core/widgets/glass_native_ad_widget.dart';
 import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/event.dart';
@@ -292,9 +293,14 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                       right: AppSizes.m,
                       bottom: 190, // Prevents bottom navigation and ad overlap
                     ),
-                    itemCount: sortedEvents.length,
+                    itemCount: sortedEvents.isEmpty ? 0 : sortedEvents.length + 1,
                     itemBuilder: (context, index) {
-                      final event = sortedEvents[index];
+                      final int adIndex = sortedEvents.length > 2 ? 2 : sortedEvents.length;
+                      if (index == adIndex) {
+                        return GlassNativeAdWidget.small();
+                      }
+                      final eventIndex = index > adIndex ? index - 1 : index;
+                      final event = sortedEvents[eventIndex];
                       final color = event.color;
                       final icon = event.icon;
                       final countdown = _getCountdownText(event.dateTime);

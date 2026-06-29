@@ -7,7 +7,6 @@ import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/custom_textfield.dart';
-import '../../../core/widgets/glass_native_ad_widget.dart';
 import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../../events/presentation/providers/events_provider.dart';
@@ -183,8 +182,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             todayRemindersWidget,
                             const SizedBox(height: AppSizes.l),
                             upcomingRemindersWidget,
-                            const SizedBox(height: AppSizes.l),
-                            GlassNativeAdWidget.medium(),
                           ],
                         ),
                       ),
@@ -213,7 +210,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: AppSizes.l),
                   upcomingRemindersWidget,
                   const SizedBox(height: AppSizes.l),
-                  GlassNativeAdWidget.medium(),
                   quickAddWidget,
                   const SizedBox(height: AppSizes.l),
                   aiWidget,

@@ -9,6 +9,8 @@ import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../../../core/services/version_check_service.dart';
 import 'providers/settings_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -700,6 +702,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     const Divider(color: Colors.white10),
                     ListTile(
+                      leading: const Icon(Icons.share_rounded, color: AppColors.primary),
+                      title: const Text('Share App', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                      onTap: () {
+                        SharePlus.instance.share(
+                          ShareParams(
+                            text: 'Check out AI Smart Life Assistant! The ultimate smart calendar and task manager: https://play.google.com/store/apps/details?id=com.chaxu.ai_smart_life_assistant',
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(color: Colors.white10),
+                    ListTile(
+                      leading: const Icon(Icons.star_rate_rounded, color: Colors.amber),
+                      title: const Text('Rate Us', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                      onTap: () async {
+                        final Uri url = Uri.parse('https://play.google.com/store/apps/details?id=com.chaxu.ai_smart_life_assistant');
+                        try {
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url, mode: LaunchMode.externalApplication);
+                          }
+                        } catch (e) {
+                          debugPrint('Error launching Play Store link: $e');
+                        }
+                      },
+                    ),
+                    const Divider(color: Colors.white10),
+                    ListTile(
                       leading: const Icon(Icons.info_outline_rounded, color: AppColors.accent),
                       title: const Text('About AI Smart Life Assistant', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
@@ -707,8 +738,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         showAboutDialog(
                           context: context,
                           applicationName: 'AI Smart Life Assistant',
-                          applicationVersion: 'v1.0.0 (Build 1)',
-                          applicationLegalese: '© 2026 AI Smart Life Assistant Inc. All rights reserved.',
+                          applicationVersion: 'v1.0.0',
+                          applicationLegalese: '© 2026 AI Smart Life Assistant. All rights reserved.',
                           applicationIcon: const CircleAvatar(
                             backgroundColor: AppColors.primary,
                             child: Icon(Icons.auto_awesome_rounded, color: Colors.white),
@@ -726,7 +757,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'AI Smart Life Assistant\nVersion 1.0.0 (Build 1)',
+                      'AI Smart Life Assistant\nVersion 1.0.0\n© 2026 AI Smart Life Assistant. All rights reserved.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,

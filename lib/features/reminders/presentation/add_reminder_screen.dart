@@ -150,7 +150,12 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
       extendBodyBehindAppBar: true,
       body: GradientBackground(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.l),
+          padding: const EdgeInsets.only(
+            left: AppSizes.m,
+            right: AppSizes.m,
+            top: AppSizes.l,
+            bottom: 190, // Ensure bottom content is scrollable above navigation capsule and ad banner
+          ),
           child: Form(
             key: _formKey,
             child: Column(

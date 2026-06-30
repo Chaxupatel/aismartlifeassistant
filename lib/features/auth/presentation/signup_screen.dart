@@ -31,7 +31,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   bool _isLoading = false;
   bool _isGoogleLoading = false;
-  bool _isAppleLoading = false;
 
   @override
   void dispose() {
@@ -251,41 +250,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               onCancel: () {
                                 if (mounted) {
                                   setState(() => _isGoogleLoading = false);
-                                }
-                              },
-                              isLogin: false,
-                            );
-                          },
-                  ),
-                  const SizedBox(width: AppSizes.m),
-                  // Apple button
-                  _buildSocialButton(
-                    isDark,
-                    isLoading: _isAppleLoading,
-                    icon: Icon(
-                      Icons.apple_rounded,
-                      size: 26,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                    onTap: _isAppleLoading || _isGoogleLoading
-                        ? null
-                        : () async {
-                            setState(() => _isAppleLoading = true);
-                            await ref.read(authNotifierProvider.notifier).signInWithApple(
-                              onSuccess: () {
-                                if (mounted) {
-                                  context.go('/home');
-                                }
-                              },
-                              onFailure: (error) {
-                                if (mounted) {
-                                  setState(() => _isAppleLoading = false);
-                                  CustomSnackBar.showError(context, error);
-                                }
-                              },
-                              onCancel: () {
-                                if (mounted) {
-                                  setState(() => _isAppleLoading = false);
                                 }
                               },
                               isLogin: false,

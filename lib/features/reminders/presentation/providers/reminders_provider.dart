@@ -41,6 +41,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     } else {
       state = list;
     }
+    _notificationService.scheduleDailyBriefings();
   }
 
   void addReminder(Reminder reminder) {
@@ -48,6 +49,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     state = [...state, updated];
     _repository.addReminder(updated);
     _notificationService.scheduleNotification(updated);
+    _notificationService.scheduleDailyBriefings();
   }
 
   void toggleReminder(String id) {
@@ -77,6 +79,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     } else {
       _notificationService.scheduleNotification(updated);
     }
+    _notificationService.scheduleDailyBriefings();
   }
 
   void updateReminder(Reminder updated) {
@@ -87,12 +90,14 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     ];
     _repository.addReminder(updatedWithTime);
     _notificationService.scheduleNotification(updatedWithTime);
+    _notificationService.scheduleDailyBriefings();
   }
 
   void deleteReminder(String id) {
     state = state.where((r) => r.id != id).toList();
     _repository.deleteReminder(id);
     _notificationService.cancelNotification(id);
+    _notificationService.scheduleDailyBriefings();
   }
 
   void deleteMultipleReminders(List<String> ids) {
@@ -101,6 +106,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
       _repository.deleteReminder(id);
       _notificationService.cancelNotification(id);
     }
+    _notificationService.scheduleDailyBriefings();
   }
 }
 

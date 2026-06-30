@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 /// Class managing the App Open Ad lifecycle and displaying it on app foregrounding.
 class AppOpenAdManager {
@@ -8,17 +9,44 @@ class AppOpenAdManager {
 
   static final AppOpenAdManager instance = AppOpenAdManager._();
 
-  // Test App Open Ad Unit IDs
-  final String _adUnitId = kIsWeb
-      ? ''
-      : Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/9257395921' // Android App Open Test ID
-          : 'ca-app-pub-3940256099942544/5575463023'; // iOS App Open Test ID
+  /// Fetch the App Open Ad Unit ID dynamically from Remote Config with fallback
+  String get _adUnitId {
+    if (kIsWeb) return '';
+    try {
+      final String id = FirebaseRemoteConfig.instance.getString('ad_unit_app_open');
+      if (id.isNotEmpty) return id;
+    } catch (e) {
+      debugPrint('Error loading ad_unit_app_open from Remote Config: $e');
+    }
+    return Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/9257395921'
+        : 'ca-app-pub-3940256099942544/5575463023';
+  }
 
   AppOpenAd? _appOpenAd;
   bool _isShowingAd = false;
   DateTime? _loadTime;
   bool _isLoading = false;
+  DateTime? _lastAdShowTime;
+
+  /// Fetch cooldown duration from Remote Config with local fallback
+  int get _cooldownSeconds {
+    try {
+      return FirebaseRemoteConfig.instance.getInt('app_open_ad_cooldown_seconds');
+    } catch (e) {
+      debugPrint('Error reading open ad cooldown from Remote Config: $e');
+      return 120; // fallback to 120 seconds
+    }
+  }
+
+  /// Check if the cooldown interval is still active
+  bool get _isCooldownActive {
+    if (_lastAdShowTime == null) return false;
+    final elapsedSeconds = DateTime.now().difference(_lastAdShowTime!).inSeconds;
+    final cooldown = _cooldownSeconds;
+    debugPrint('AppOpenAd Cooldown: $elapsedSeconds seconds elapsed out of $cooldown.');
+    return elapsedSeconds < cooldown;
+  }
 
   /// Check if the loaded ad has expired (AdMob App Open ads expire after 4 hours).
   bool get _isAdExpired {
@@ -69,6 +97,12 @@ class AppOpenAdManager {
       return;
     }
 
+    if (_isCooldownActive) {
+      debugPrint('AppOpenAd skipped due to active cooldown timer.');
+      onAdDismissed?.call();
+      return;
+    }
+
     if (!isAdAvailable) {
       debugPrint('Tried to show AppOpenAd but it is not available.');
       loadAd();
@@ -84,6 +118,7 @@ class AppOpenAdManager {
     _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
         _isShowingAd = true;
+        _lastAdShowTime = DateTime.now(); // Reset cooldown timer on successful show
         debugPrint('AppOpenAd showed full screen content.');
       },
       onAdFailedToShowFullScreenContent: (ad, error) {

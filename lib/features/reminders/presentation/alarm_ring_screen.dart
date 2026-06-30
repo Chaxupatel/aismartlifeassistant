@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'package:hive/hive.dart';
 import 'package:alarm/alarm.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/glass_container.dart';
+import 'providers/reminders_provider.dart';
 
-class AlarmRingScreen extends StatefulWidget {
+class AlarmRingScreen extends ConsumerStatefulWidget {
   final AlarmSettings alarmSettings;
 
   const AlarmRingScreen({super.key, required this.alarmSettings});
 
   @override
-  State<AlarmRingScreen> createState() => _AlarmRingScreenState();
+  ConsumerState<AlarmRingScreen> createState() => _AlarmRingScreenState();
 }
 
-class _AlarmRingScreenState extends State<AlarmRingScreen> with SingleTickerProviderStateMixin {
+class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
@@ -32,15 +36,48 @@ class _AlarmRingScreenState extends State<AlarmRingScreen> with SingleTickerProv
   }
 
   void _stopAlarm() async {
+    // 1. Stop the ringing audio
     await Alarm.stop(widget.alarmSettings.id);
+
+    // 2. Complete/Delete One Time reminders automatically
+    final payloadStr = widget.alarmSettings.payload;
+    if (payloadStr != null && payloadStr.isNotEmpty) {
+      try {
+        final Map<String, dynamic> data = jsonDecode(payloadStr);
+        final String? reminderId = data['id'];
+        if (reminderId != null) {
+          final box = Hive.box<Map>('reminders_box');
+          final reminderMap = box.get(reminderId);
+          if (reminderMap != null) {
+            final repeatType = reminderMap['repeatType'] as String? ?? 'One Time';
+            if (repeatType == 'One Time') {
+              // Trigger Riverpod notifier completion which auto-deletes One Time from database and syncs to cloud
+              ref.read(remindersProvider.notifier).toggleReminder(reminderId);
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('AlarmRingScreen: Error completing One Time reminder: $e');
+      }
+    }
+
     if (mounted) context.pop();
   }
 
   void _snoozeAlarm() async {
     final now = DateTime.now();
-    // Parse snooze duration from payload, default to 5 if not found or invalid
+    // Parse snooze duration from JSON payload, fallback to string format
     final payloadStr = widget.alarmSettings.payload;
-    final snoozeMinutes = payloadStr != null ? (int.tryParse(payloadStr) ?? 5) : 5;
+    int snoozeMinutes = 5;
+    if (payloadStr != null && payloadStr.isNotEmpty) {
+      try {
+        final Map<String, dynamic> data = jsonDecode(payloadStr);
+        snoozeMinutes = data['snooze'] as int? ?? 5;
+      } catch (_) {
+        snoozeMinutes = int.tryParse(payloadStr) ?? 5;
+      }
+    }
+    
     final snoozeTime = now.add(Duration(minutes: snoozeMinutes));
     
     final newSettings = widget.alarmSettings.copyWith(
@@ -77,7 +114,7 @@ class _AlarmRingScreenState extends State<AlarmRingScreen> with SingleTickerProv
                   child: Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.alarm_on_rounded, size: 80, color: AppColors.primary),
@@ -85,7 +122,7 @@ class _AlarmRingScreenState extends State<AlarmRingScreen> with SingleTickerProv
                 ),
                 const SizedBox(height: AppSizes.xxl),
                 Text(
-                  widget.alarmSettings.notificationSettings.title ?? 'Reminder',
+                  widget.alarmSettings.notificationSettings.title,
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -97,7 +134,7 @@ class _AlarmRingScreenState extends State<AlarmRingScreen> with SingleTickerProv
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
                   child: Text(
-                    widget.alarmSettings.notificationSettings.body ?? '',
+                    widget.alarmSettings.notificationSettings.body,
                     style: const TextStyle(
                       fontSize: 18,
                       color: Colors.white70,
@@ -135,7 +172,7 @@ class _AlarmRingScreenState extends State<AlarmRingScreen> with SingleTickerProv
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.error.withOpacity(0.4),
+                              color: AppColors.error.withValues(alpha: 0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),

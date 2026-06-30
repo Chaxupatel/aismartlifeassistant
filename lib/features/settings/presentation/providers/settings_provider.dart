@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:ai_smart_life_assistant/core/services/notification_service.dart';
 import '../../data/settings_repository.dart';
 
 // Provider for the repository
@@ -65,6 +66,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void toggleSmartBriefings(bool value) {
     _repository.setSmartBriefingsEnabled(value);
     state = state.copyWith(smartBriefingsEnabled: value);
+    NotificationService().scheduleDailyBriefings();
   }
 
   void updateNotificationTone(String tone) {

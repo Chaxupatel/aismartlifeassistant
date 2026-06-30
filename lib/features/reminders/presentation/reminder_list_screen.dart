@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -20,6 +21,48 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
   String _searchQuery = '';
   final Set<String> _selectedIds = {};
   bool _isSelectionMode = false;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Periodic timer to rebuild UI and keep countdowns current
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  String _getRemainingTimeText(DateTime target) {
+    final now = DateTime.now();
+    final difference = target.difference(now);
+    
+    if (difference.isNegative) {
+      return '';
+    }
+    
+    if (difference.inDays > 0) {
+      final days = difference.inDays;
+      final hours = difference.inHours % 24;
+      return 'Starts in ${days}d ${hours}h';
+    } else if (difference.inHours > 0) {
+      final hours = difference.inHours;
+      final minutes = difference.inMinutes % 60;
+      return 'Starts in ${hours}h ${minutes}m';
+    } else if (difference.inMinutes > 0) {
+      return 'Starts in ${difference.inMinutes}m';
+    } else {
+      final seconds = difference.inSeconds;
+      return seconds > 0 ? 'Starts in ${seconds}s' : 'Starting now';
+    }
+  }
 
   int get _adInterval => 5;
 
@@ -211,32 +254,46 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                             borderColor: isSelected
                                 ? AppColors.primary.withValues(alpha: 0.5)
                                 : (isDark ? Colors.white10 : Colors.black12),
-                            padding: const EdgeInsets.all(AppSizes.m),
-                            child: Row(
+                            padding: EdgeInsets.zero,
+                            child: Stack(
                               children: [
-                                if (_isSelectionMode)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: AppSizes.m),
-                                    child: Icon(
-                                      isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                                      color: isSelected ? AppColors.primary : (isDark ? Colors.white38 : Colors.black38),
-                                    ),
-                                  )
-                                else
-                                  InkWell(
-                                    onTap: () {
-                                      ref.read(remindersProvider.notifier).toggleReminder(reminder.id);
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Icon(
-                                      reminder.isCompleted
-                                          ? Icons.check_circle_rounded
-                                          : Icons.radio_button_off_rounded,
-                                      color: reminder.isCompleted ? AppColors.success : AppColors.primary,
-                                    ),
+                                Positioned(
+                                  right: -10,
+                                  bottom: -15,
+                                  child: Icon(
+                                    _getRecurrenceWatermarkIcon(reminder.repeatType),
+                                    size: 90,
+                                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
                                   ),
-                                if (!_isSelectionMode)
-                                  const SizedBox(width: AppSizes.m),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(AppSizes.m),
+                                  child: Row(
+                                    children: [
+                                      _buildRecurrenceLeftDecorator(reminder.repeatType, isDark),
+                                      if (_isSelectionMode)
+                                        Padding(
+                                          padding: const EdgeInsets.only(right: AppSizes.m),
+                                          child: Icon(
+                                            isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                                            color: isSelected ? AppColors.primary : (isDark ? Colors.white38 : Colors.black38),
+                                          ),
+                                        )
+                                      else
+                                        InkWell(
+                                          onTap: () {
+                                            ref.read(remindersProvider.notifier).toggleReminder(reminder.id);
+                                          },
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Icon(
+                                            reminder.isCompleted
+                                                ? Icons.check_circle_rounded
+                                                : Icons.radio_button_off_rounded,
+                                            color: reminder.isCompleted ? AppColors.success : AppColors.primary,
+                                          ),
+                                        ),
+                                      if (!_isSelectionMode)
+                                        const SizedBox(width: AppSizes.m),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,8 +326,8 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                                           ),
                                           if (reminder.repeatType != 'One Time') ...[
                                             const SizedBox(width: 8),
-                                            const Icon(
-                                              Icons.replay_rounded,
+                                            Icon(
+                                              _getRecurrenceMicroIcon(reminder.repeatType),
                                               size: 12,
                                               color: AppColors.primary,
                                             ),
@@ -294,6 +351,27 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                                           ],
                                         ],
                                       ),
+                                        if (!reminder.isCompleted && reminder.dateTime.isAfter(DateTime.now())) ...[
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.timelapse_rounded,
+                                                size: 12,
+                                                color: AppColors.accent,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _getRemainingTimeText(reminder.dateTime),
+                                                style: const TextStyle(
+                                                  color: AppColors.accent,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                     ],
                                   ),
                                 ),
@@ -313,6 +391,9 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
+                                  ),
+                                ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -386,5 +467,125 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getRecurrenceWatermarkIcon(String repeatType) {
+    switch (repeatType) {
+      case 'Daily':
+        return Icons.autorenew_rounded;
+      case 'Weekly':
+        return Icons.calendar_view_week_rounded;
+      case 'Monthly':
+        return Icons.calendar_month_rounded;
+      case 'Yearly':
+        return Icons.auto_awesome_rounded;
+      case 'One Time':
+      default:
+        return Icons.alarm_rounded;
+    }
+  }
+
+  Widget _buildRecurrenceLeftDecorator(String repeatType, bool isDark) {
+    switch (repeatType) {
+      case 'Daily':
+        return Container(
+          width: 5,
+          height: 28,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2.5),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.cyanAccent, AppColors.primary],
+            ),
+          ),
+        );
+      case 'Weekly':
+        return Container(
+          width: 5,
+          height: 28,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2.5),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.purpleAccent, Colors.pinkAccent],
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(3, (_) => Container(width: 4, height: 2, color: isDark ? Colors.black38 : Colors.white60)),
+          ),
+        );
+      case 'Monthly':
+        return Container(
+          width: 8,
+          height: 28,
+          margin: const EdgeInsets.only(right: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(width: 2, height: 28, decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(1))),
+              Container(width: 2, height: 28, decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(1))),
+            ],
+          ),
+        );
+      case 'Yearly':
+        return Container(
+          width: 12,
+          height: 28,
+          margin: const EdgeInsets.only(right: 8),
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              Positioned(
+                bottom: 0,
+                child: Container(
+                  width: 4,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    gradient: const LinearGradient(
+                      colors: [Colors.amber, Colors.orange],
+                    ),
+                  ),
+                ),
+              ),
+              const Positioned(
+                top: 0,
+                child: Icon(Icons.star_rounded, size: 10, color: Colors.amber),
+              ),
+            ],
+          ),
+        );
+      case 'One Time':
+      default:
+        return Container(
+          width: 4,
+          height: 20,
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white24 : Colors.black12,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        );
+    }
+  }
+
+  IconData _getRecurrenceMicroIcon(String repeatType) {
+    switch (repeatType) {
+      case 'Daily':
+        return Icons.sync_rounded;
+      case 'Weekly':
+        return Icons.view_week_rounded;
+      case 'Monthly':
+        return Icons.calendar_month_rounded;
+      case 'Yearly':
+        return Icons.auto_awesome_rounded;
+      default:
+        return Icons.replay_rounded;
+    }
   }
 }

@@ -20,11 +20,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  // Local UI States for backup
-  bool _autoSyncBackup = false;
-  bool _backupLoading = false;
-  String _lastBackupDate = 'Never';
-
   final List<String> _notificationTones = ['Gentle Chime', 'Standard Ping', 'Silent'];
   final List<String> _alarmRingtones = ['Default', 'Classic', 'Digital', 'Crystal'];
   
@@ -44,28 +39,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   // --- ACTIONS ---
-
-  void _triggerBackup() {
-    setState(() {
-      _backupLoading = true;
-    });
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      final now = DateTime.now();
-      setState(() {
-        _backupLoading = false;
-        _lastBackupDate = '${now.day}/${now.month}/${now.year} at ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Database backup saved successfully to secure local storage!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-    });
-  }
 
   void _showPrivacyPolicy() {
     showDialog(
@@ -627,62 +600,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
 
-              // 4. BACKUP
-              _buildSectionHeader('BACKUP & SYNC', isDark),
-              GlassContainer(
-                blur: 20,
-                opacity: isDark ? 0.08 : 0.12,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white12 : Colors.black12,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  children: [
-                    SwitchListTile(
-                      activeColor: AppColors.primary,
-                      title: const Text('Auto-Sync Backup', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Silently sync reminders database in the background.', style: TextStyle(fontSize: 11)),
-                      value: _autoSyncBackup,
-                      onChanged: (val) {
-                        setState(() {
-                          _autoSyncBackup = val;
-                        });
-                      },
-                    ),
-                    const Divider(color: Colors.white10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Manual Database Backup', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 2),
-                              Text('Last Backup: $_lastBackupDate', style: const TextStyle(fontSize: 11, color: Colors.white38)),
-                            ],
-                          ),
-                          _backupLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary)),
-                                )
-                              : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary.withOpacity(0.15),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  onPressed: _triggerBackup,
-                                  child: const Text('Backup Now', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold)),
-                                ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
 
               // 5. PRIVACY & ABOUT
               _buildSectionHeader('LEGAL & INFORMATION', isDark),

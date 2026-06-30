@@ -9,6 +9,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../domain/reminder.dart';
 import 'providers/reminders_provider.dart';
+import '../../../core/services/interstitial_ad_manager.dart';
 
 /// Screen to create a new task reminder.
 class AddReminderScreen extends ConsumerStatefulWidget {
@@ -130,7 +131,15 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
           backgroundColor: AppColors.success,
         ),
       );
-      context.pop();
+
+      InterstitialAdManager.instance.checkAndShowAd(
+        context,
+        onComplete: () {
+          if (mounted) {
+            context.pop();
+          }
+        },
+      );
     }
   }
 

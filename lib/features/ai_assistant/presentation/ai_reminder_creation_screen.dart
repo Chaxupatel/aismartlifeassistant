@@ -10,6 +10,7 @@ import '../../../core/widgets/gradient_background.dart';
 import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/rule_based_parser.dart';
+import '../../../core/services/interstitial_ad_manager.dart';
 
 class AIReminderCreationScreen extends ConsumerStatefulWidget {
   const AIReminderCreationScreen({super.key});
@@ -183,7 +184,14 @@ class _AIReminderCreationScreenState extends ConsumerState<AIReminderCreationScr
       ),
     );
 
-    context.pop();
+    InterstitialAdManager.instance.checkAndShowAd(
+      context,
+      onComplete: () {
+        if (mounted) {
+          context.pop();
+        }
+      },
+    );
   }
 
   Color _getCategoryColor(String cat) {

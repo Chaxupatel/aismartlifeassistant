@@ -1,4 +1,5 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -54,6 +55,9 @@ class NotificationService {
 
     // Initialize Firebase Cloud Messaging listeners
     _initFcmListeners();
+
+    // Pre-schedule daily briefings on startup
+    scheduleDailyBriefings();
   }
 
   void _initFcmListeners() {
@@ -169,7 +173,10 @@ class NotificationService {
           stopButton: 'Stop',
           icon: 'notification_icon',
         ),
-        payload: reminder.snoozeDuration.toString(),
+        payload: jsonEncode({
+          'id': reminder.id,
+          'snooze': reminder.snoozeDuration,
+        }),
       );
       
       await Alarm.set(alarmSettings: alarmSettings);
@@ -254,6 +261,112 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: matchComponents,
       );
+    }
+  }
+
+  /// Pre-calculates and schedules daily briefings for the next 7 days at 9:00 AM.
+  Future<void> scheduleDailyBriefings() async {
+    final box = Hive.box('settings_box');
+    final bool isEnabled = box.get('smartBriefingsEnabled', defaultValue: false) as bool;
+
+    // First, cancel any previously scheduled briefings (IDs 99901 to 99907)
+    for (int d = 1; d <= 7; d++) {
+      await _plugin.cancel(id: 99900 + d);
+    }
+
+    if (!isEnabled) {
+      debugPrint('NotificationService: Smart Daily Briefings are disabled. Skipping scheduling.');
+      return;
+    }
+
+    debugPrint('NotificationService: Scheduling Smart Daily Briefings for the next 7 days...');
+
+    final remindersBox = Hive.box<Map>('reminders_box');
+    final maps = remindersBox.values.toList();
+    final List<Reminder> reminders = maps.map((m) => Reminder.fromMap(m)).toList();
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    const androidDetails = AndroidNotificationDetails(
+      'daily_briefing_channel',
+      'Daily Briefings',
+      channelDescription: 'Smart daily schedule briefings at 9:00 AM',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+      playSound: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    for (int d = 1; d <= 7; d++) {
+      final targetDate = today.add(Duration(days: d));
+      final scheduledTime = DateTime(
+        targetDate.year,
+        targetDate.month,
+        targetDate.day,
+        9,
+        0,
+      );
+
+      final tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
+      final tzNow = tz.TZDateTime.now(tz.local);
+
+      if (tzScheduledTime.isBefore(tzNow)) {
+        continue; // Skip if somehow in the past
+      }
+
+      // Filter reminders occurring on this target date
+      final dayReminders = reminders.where((r) {
+        if (r.isCompleted) return false;
+        final start = DateTime(r.dateTime.year, r.dateTime.month, r.dateTime.day);
+        final target = DateTime(targetDate.year, targetDate.month, targetDate.day);
+        if (target.isBefore(start)) return false;
+
+        if (r.repeatType == 'One Time') {
+          return start.isAtSameMomentAs(target);
+        } else if (r.repeatType == 'Daily') {
+          return true;
+        } else if (r.repeatType == 'Weekly') {
+          return r.dateTime.weekday == targetDate.weekday;
+        } else if (r.repeatType == 'Monthly') {
+          return r.dateTime.day == targetDate.day;
+        } else if (r.repeatType == 'Yearly') {
+          return r.dateTime.month == targetDate.month && r.dateTime.day == targetDate.day;
+        }
+        return false;
+      }).toList();
+
+      final count = dayReminders.length;
+      String bodyText;
+      if (count == 0) {
+        bodyText = 'Good morning! You have no tasks scheduled for today. Have a relaxed day!';
+      } else if (count == 1) {
+        bodyText = 'Good morning! You have 1 task today: "${dayReminders.first.title}".';
+      } else {
+        final titles = dayReminders.take(2).map((r) => r.title).join(', ');
+        bodyText = 'Good morning! You have $count tasks today, including: $titles.';
+      }
+
+      await _plugin.zonedSchedule(
+        id: 99900 + d,
+        title: 'Your Daily Briefing ☀️',
+        body: bodyText,
+        scheduledDate: tzScheduledTime,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+      
+      debugPrint('NotificationService: Scheduled briefing #$d for $scheduledTime. Body: "$bodyText"');
     }
   }
 

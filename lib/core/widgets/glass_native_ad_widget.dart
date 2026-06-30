@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'glass_container.dart';
 import '../constants/app_colors.dart';
 
@@ -47,8 +48,15 @@ class _GlassNativeAdWidgetState extends State<GlassNativeAdWidget> {
   }
 
   void _loadAd() {
-    // Google's official Test Native Ad Unit ID
-    const String adUnitId = 'ca-app-pub-3940256099942544/2247696110';
+    String adUnitId = 'ca-app-pub-3940256099942544/2247696110';
+    try {
+      final String remoteId = FirebaseRemoteConfig.instance.getString('ad_unit_native');
+      if (remoteId.isNotEmpty) {
+        adUnitId = remoteId;
+      }
+    } catch (e) {
+      debugPrint('Error loading ad_unit_native from Remote Config: $e');
+    }
 
     
     _nativeAd = NativeAd(

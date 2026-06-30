@@ -221,9 +221,29 @@ class RuleBasedParser {
       minute,
     );
 
-    // If it's a one-time reminder and the final time is in the past for today, push to tomorrow
-    if (repeatType == 'One Time' && finalDateTime.isBefore(now) && !lower.contains('tomorrow') && targetWeekday == null && targetDayOfMonth == null && targetMonth == null) {
-      finalDateTime = finalDateTime.add(const Duration(days: 1));
+    // Resolve past dates to their next future occurrence based on repeat recurrence type
+    if (finalDateTime.isBefore(now)) {
+      if (repeatType == 'Daily') {
+        finalDateTime = finalDateTime.add(const Duration(days: 1));
+      } else if (repeatType == 'Weekly') {
+        finalDateTime = finalDateTime.add(const Duration(days: 7));
+      } else if (repeatType == 'Monthly') {
+        int nextMonth = finalDateTime.month + 1;
+        int year = finalDateTime.year;
+        if (nextMonth > 12) {
+          nextMonth = 1;
+          year++;
+        }
+        final daysInNextMonth = DateTime(year, nextMonth + 1, 0).day;
+        final targetDay = finalDateTime.day.clamp(1, daysInNextMonth);
+        finalDateTime = DateTime(year, nextMonth, targetDay, finalDateTime.hour, finalDateTime.minute);
+      } else if (repeatType == 'Yearly') {
+        finalDateTime = DateTime(finalDateTime.year + 1, finalDateTime.month, finalDateTime.day, finalDateTime.hour, finalDateTime.minute);
+      } else if (repeatType == 'One Time') {
+        if (!lower.contains('tomorrow') && targetWeekday == null && targetDayOfMonth == null && targetMonth == null) {
+          finalDateTime = finalDateTime.add(const Duration(days: 1));
+        }
+      }
     }
 
     // 5. Clean Title (Extract core reminder title)

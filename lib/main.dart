@@ -13,6 +13,7 @@ import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
 
 import 'core/services/app_open_ad_manager.dart';
+import 'core/services/interstitial_ad_manager.dart';
 import 'core/services/remote_config_service.dart';
 import 'firebase_options.dart';
 
@@ -55,6 +56,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         MobileAds.instance.initialize().then((_) {
           AppOpenAdManager.instance.initializeLifecycleListener();
           AppOpenAdManager.instance.loadAd();
+          InterstitialAdManager.instance.loadAd(); // Preload Interstitial on startup
         }),
         Hive.initFlutter().then((_) => Future.wait([
           Hive.openBox<Map>('reminders_box'),

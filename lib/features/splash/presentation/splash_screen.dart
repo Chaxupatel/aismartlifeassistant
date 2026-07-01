@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/gradient_background.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../core/widgets/ad_banner_widget.dart';
@@ -204,36 +203,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                             ),
                           ],
                         ),
-                        child: GlassContainer(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(36),
+                        child: Container(
                           width: 140,
                           height: 140,
-                          borderRadius: 36,
-                          blur: 25,
-                          opacity: isDark ? 0.15 : 0.25,
-                          color: isDark ? Colors.black : Colors.white,
-                          borderColor: isDark ? Colors.white24 : Colors.black12,
+                          color: isDark ? Colors.black26 : Colors.white10,
                           child: Stack(
                             children: [
                               Center(
-                                child: Container(
-                                  width: 70,
-                                  height: 70,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: AppColors.primaryGradient,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.5),
-                                        blurRadius: 24,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.auto_awesome,
-                                    color: Colors.white,
-                                    size: 36,
-                                  ),
+                                child: Image.asset(
+                                  'assets/logo.png',
+                                  width: 140,
+                                  height: 140,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                               // Animate shine sweep line via ShaderMask
@@ -273,7 +256,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                ),
+                const SizedBox(height: 40),
                   
                   // App Name branding text
                   FadeTransition(
@@ -294,7 +278,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
                   FadeTransition(
                     opacity: _taglineFade,
                     child: Text(
-                      'Your AI-Powered Life Assistant',
+                      'Remember Everything. Live Better.',
                       style: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                         fontSize: 15,

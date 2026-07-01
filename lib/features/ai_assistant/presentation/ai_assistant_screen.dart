@@ -99,7 +99,7 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
     super.initState();
     _messages.addAll([
       ChatMessage(
-        text: 'Hello! I am your AI Smart Life Assistant. How can I help organize your schedule today?',
+        text: 'Hello! I am Remindly, your AI assistant. How can I help organize your schedule today?',
         isMe: false,
       ),
       ChatMessage(

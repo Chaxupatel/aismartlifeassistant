@@ -40,84 +40,14 @@ class EventsApiService {
     return [];
   }
 
-  /// Fetches upcoming football matches across multiple major leagues from TheSportsDB.
+  /// Fetches upcoming football matches (FIFA World Cup matches from openfootball JSON data).
   Future<List<Event>> fetchFootballMatches() async {
     try {
-      debugPrint('EventsApiService: Fetching football matches from TheSportsDB...');
-      final leagueMap = {
-        '4328': 'English Premier League',
-        '4329': 'English Championship',
-        '4335': 'Spanish La Liga',
-        '4332': 'Italian Serie A',
-        '4331': 'German Bundesliga',
-        '4334': 'French Ligue 1',
-        '4346': 'American MLS',
-        '4337': 'Dutch Eredivisie',
-        '4480': 'UEFA Champions League',
-        '4481': 'UEFA Europa League',
-        '4724': 'UEFA Euro',
-        '4725': 'Copa America',
-        '4429': 'FIFA World Cup',
-      };
-
-      final List<Future<List<Event>>> futures = [];
-
-      for (final entry in leagueMap.entries) {
-        final leagueId = entry.key;
-        final leagueName = entry.value;
-        
-        futures.add(() async {
-          try {
-            final url = 'https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=$leagueId';
-            final response = await http.get(Uri.parse(url))
-                .timeout(const Duration(seconds: 8));
-            
-            if (response.statusCode == 200) {
-              final Map<String, dynamic> body = jsonDecode(response.body);
-              final List<dynamic>? eventsData = body['events'];
-              if (eventsData != null && eventsData.isNotEmpty) {
-                final List<Event> leagueEvents = [];
-                for (final event in eventsData) {
-                  final String id = event['idEvent']?.toString() ?? '';
-                  final String title = event['strEvent'] as String? ?? 'Unknown Match';
-                  final String timestampStr = event['strTimestamp'] as String? ?? '';
-                  final String league = event['strLeague'] as String? ?? leagueName;
-                  final String venue = event['strVenue'] as String? ?? league;
-                  
-                  final matchTime = _parseTheSportsDbDateTime(timestampStr);
-                  
-                  leagueEvents.add(Event(
-                    id: 'football_$id',
-                    title: '[$leagueName] $title',
-                    dateTime: matchTime,
-                    location: venue,
-                    type: 'Football Matches',
-                    icon: Icons.sports_soccer_rounded,
-                    color: Colors.orangeAccent,
-                  ));
-                }
-                return leagueEvents;
-              }
-            }
-          } catch (e) {
-            debugPrint('EventsApiService: Error fetching football league $leagueName ($leagueId): $e');
-          }
-          return <Event>[];
-        }());
-      }
-
-      final List<List<Event>> results = await Future.wait(futures);
-      final List<Event> allEvents = results.expand((x) => x).toList();
-      
-      // Fetch FIFA World Cup matches (which yields the complete, accurate schedule)
+      debugPrint('EventsApiService: Fetching football matches...');
       final worldCupEvents = await _fetchWorldCupMatches();
-      allEvents.addAll(worldCupEvents);
-      
       // Sort matches chronologically
-      allEvents.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-      
-      debugPrint('EventsApiService: Loaded ${allEvents.length} total football matches.');
-      return allEvents;
+      worldCupEvents.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      return worldCupEvents;
     } catch (e) {
       debugPrint('EventsApiService: General error fetching football matches: $e');
     }
@@ -280,21 +210,7 @@ class EventsApiService {
     return DateTime.tryParse(dateStr)?.toLocal() ?? DateTime.now();
   }
 
-  /// Parses GMT/UTC datetime from TheSportsDB (e.g. "2026-08-21T19:00:00" or "2026-08-21 19:00:00") into local time.
-  DateTime _parseTheSportsDbDateTime(String timestampStr) {
-    if (timestampStr.isEmpty) return DateTime.now();
-    try {
-      String formatted = timestampStr.trim().replaceAll(' ', 'T');
-      // If it doesn't end with Z or contain offset (+/-), assume it's in UTC/GMT
-      if (!formatted.endsWith('Z') && !formatted.contains('+') && !RegExp(r'-\d{2}:\d{2}').hasMatch(formatted)) {
-        formatted += 'Z';
-      }
-      return DateTime.tryParse(formatted)?.toLocal() ?? DateTime.now();
-    } catch (e) {
-      debugPrint('EventsApiService: Error parsing TheSportsDB datetime: $e');
-    }
-    return DateTime.tryParse(timestampStr)?.toLocal() ?? DateTime.now();
-  }
+
 
   /// Parses datetime with offset from openfootball (e.g. date="2026-06-24", time="12:00 UTC-7") into local time.
   DateTime _parseOpenFootballDateTime(String dateStr, String timeStr) {

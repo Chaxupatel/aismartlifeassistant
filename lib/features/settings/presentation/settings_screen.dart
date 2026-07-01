@@ -81,7 +81,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     child: Text(
-                      'AI Smart Life Assistant Privacy Contract\n\n'
+                      'Remindly Privacy Contract\n\n'
                       '1. Data Collection\n'
                       'All reminder descriptions, categories, and calendar events created by you are stored exclusively on your device within the secure local Hive storage. We do not transmit your database records to external servers.\n\n'
                       '2. Local Notifications & Alarms\n'
@@ -304,7 +304,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     const SizedBox(height: AppSizes.s),
                     Text(
-                      'You are running the latest version of AI Smart Life Assistant (v${updateInfo.localVersion}).',
+                      'You are running the latest version of Remindly (v${updateInfo.localVersion}).',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
@@ -626,7 +626,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       onTap: () {
                         SharePlus.instance.share(
                           ShareParams(
-                            text: 'Check out AI Smart Life Assistant! The ultimate smart calendar and task manager: https://play.google.com/store/apps/details?id=com.chaxu.ai_smart_life_assistant',
+                            text: 'Check out Remindly! The ultimate smart calendar and task manager: https://play.google.com/store/apps/details?id=com.chaxu.ai_smart_life_assistant',
                           ),
                         );
                       },
@@ -650,14 +650,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const Divider(color: Colors.white10),
                     ListTile(
                       leading: const Icon(Icons.info_outline_rounded, color: AppColors.accent),
-                      title: const Text('About AI Smart Life Assistant', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      title: const Text('About Remindly', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
                       onTap: () {
                         showAboutDialog(
                           context: context,
-                          applicationName: 'AI Smart Life Assistant',
+                          applicationName: 'Remindly',
                           applicationVersion: 'v1.0.0',
-                          applicationLegalese: '© 2026 AI Smart Life Assistant. All rights reserved.',
+                          applicationLegalese: '© 2026 Remindly. All rights reserved.',
                           applicationIcon: const CircleAvatar(
                             backgroundColor: AppColors.primary,
                             child: Icon(Icons.auto_awesome_rounded, color: Colors.white),
@@ -675,7 +675,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'AI Smart Life Assistant\nVersion 1.0.0\n© 2026 AI Smart Life Assistant. All rights reserved.',
+                      'Remindly\nVersion 1.0.0\n© 2026 Remindly. All rights reserved.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,

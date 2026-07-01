@@ -2,7 +2,7 @@
 class AppStrings {
   AppStrings._();
 
-  static const String appName = 'AI Smart Life Assistant';
+  static const String appName = 'Remindly';
   
   // Onboarding
   static const String onboardingTitle1 = 'Smart Scheduling';

@@ -122,7 +122,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     final router = ref.read(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'AI Smart Life Assistant',
+      title: 'Remindly',
       themeMode: themeMode,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

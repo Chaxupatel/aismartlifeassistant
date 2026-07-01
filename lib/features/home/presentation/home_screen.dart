@@ -234,7 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome to Smart Life',
+              'Welcome to Remindly',
               style: TextStyle(
                 color: isDark
                     ? AppColors.darkTextSecondary

@@ -41,14 +41,15 @@ class MainNavigationShell extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
                     child: GlassContainer(
+                      customGradient: isDark ? AppColors.bentoDarkCard : null,
                       padding: const EdgeInsets.symmetric(vertical: AppSizes.s + 4),
                       borderRadius: 30, // Capsule shape
                       blur: 24,
                       forceBlur: true,
-                      opacity: isDark ? 0.18 : 0.55,
-                      color: Colors.white, // White backdrop creates a beautiful frosty/milky glass sheen
+                      opacity: 1.0,
+                      color: Colors.transparent, // White backdrop creates a beautiful frosty/milky glass sheen
                       borderColor: isDark
-                          ? const Color(0x44FFFFFF) // Sharper border outline in dark mode
+                          ? Colors.white24 // Sharper border outline in dark mode
                           : const Color(0x66FFFFFF),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -226,10 +226,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
             child: GlassContainer(
+              customGradient: isDark ? AppColors.bentoDarkCard : null,
+              borderRadius: 24, // Bento style
               blur: 24,
-              opacity: isDark ? 0.08 : 0.14,
-              color: isDark ? Colors.black : Colors.white,
-              borderColor: isDark ? Colors.white10 : Colors.black12,
+              opacity: 1.0,
+              color: Colors.transparent,
+              borderColor: Colors.white24,
               padding: const EdgeInsets.all(AppSizes.s),
               child: TableCalendar<Reminder>(
                 firstDay: DateTime.utc(2020, 1, 1),
@@ -441,10 +443,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _buildEmptyState(String text, bool isDark) {
     return GlassContainer(
+      customGradient: isDark ? AppColors.bentoDarkCard : null,
+      borderRadius: 24, // Bento style
       blur: 10,
-      opacity: isDark ? 0.04 : 0.08,
-      color: isDark ? Colors.black : Colors.white,
-      borderColor: isDark ? Colors.white10 : Colors.black12,
+      opacity: 1.0,
+      color: Colors.transparent,
+      borderColor: Colors.white24,
       padding: const EdgeInsets.symmetric(vertical: AppSizes.m, horizontal: AppSizes.m),
       child: Center(
         child: Text(
@@ -464,10 +468,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.s),
       child: GlassContainer(
+        customGradient: isDark ? AppColors.bentoDarkCard : null,
+        borderRadius: 24, // Bento style
         blur: 15,
-        opacity: isDark ? 0.06 : 0.1,
-        color: isDark ? Colors.black : Colors.white,
-        borderColor: isDark ? Colors.white10 : Colors.black12,
+        opacity: 1.0,
+        color: Colors.transparent,
+        borderColor: Colors.white24,
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: 12),
         child: Row(
           children: [

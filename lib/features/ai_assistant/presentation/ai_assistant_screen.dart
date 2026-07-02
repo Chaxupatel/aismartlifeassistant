@@ -366,150 +366,150 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
             ),
           ),
         ),
-        const SizedBox(height: AppSizes.xs),
+        const SizedBox(height: AppSizes.s),
 
-        // Horizontal Slider
-        SizedBox(
-          height: 130,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
-            children: [
-              // SUGGESTED REMINDERS SECTION
-              ..._suggestedReminders.map((sug) {
-                return Container(
-                  width: 200,
-                  margin: const EdgeInsets.only(right: AppSizes.s, bottom: 8),
-                  child: GlassContainer(
-                    blur: 15,
-                    opacity: isDark ? 0.06 : 0.12,
-                    color: isDark ? Colors.black : Colors.white,
-                    borderColor: isDark ? Colors.white10 : Colors.black12,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        // Bento Grid for Suggestions
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
+          child: GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: AppSizes.s,
+            mainAxisSpacing: AppSizes.s,
+            childAspectRatio: 1.5, // Wider rectangular tiles
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            children: _suggestedReminders.take(4).map((sug) {
+              return GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
+                borderRadius: 20, // Bento tile radius
+                blur: 15,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(sug['icon'] as IconData, size: 14, color: sug['color'] as Color),
-                            const SizedBox(width: 4),
-                            Text(
-                              sug['category'] as String,
-                              style: TextStyle(
-                                color: sug['color'] as Color,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: Text(
-                            sug['title'] as String,
-                            style: TextStyle(
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Icon(sug['icon'] as IconData, size: 14, color: sug['color'] as Color),
+                        const SizedBox(width: 4),
+                        Text(
+                          sug['category'] as String,
+                          style: TextStyle(
+                            color: sug['color'] as Color,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${sug['repeat']} • ${sug['hour'].toString().padLeft(2, '0')}:${sug['minute'].toString().padLeft(2, '0')}',
-                              style: TextStyle(
-                                color: isDark ? Colors.white38 : Colors.black38,
-                                fontSize: 9,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => _handleQuickAddReminder(sug),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Add',
-                                  style: TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
-                  ),
-                );
-              }),
-
-              // PRODUCTIVITY TIPS SECTION
-              ..._productivityTips.map((tip) {
-                return Container(
-                  width: 250,
-                  margin: const EdgeInsets.only(right: AppSizes.s, bottom: 8),
-                  child: GlassContainer(
-                    blur: 15,
-                    opacity: isDark ? 0.08 : 0.15,
-                    color: isDark ? Colors.black : Colors.white,
-                    borderColor: isDark ? Colors.white10 : Colors.black12,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const Spacer(),
+                    Text(
+                      sug['title'] as String,
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.lightbulb_outline_rounded, size: 14, color: AppColors.accent),
-                            SizedBox(width: 4),
-                            Text(
-                              'Productivity Insight',
-                              style: TextStyle(color: AppColors.accent, fontSize: 9, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: Text(
-                            tip['tip'] as String,
-                            style: TextStyle(
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                              fontSize: 11,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          '${sug['hour'].toString().padLeft(2, '0')}:${sug['minute'].toString().padLeft(2, '0')}',
+                          style: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black38,
+                            fontSize: 10,
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: GestureDetector(
-                            onTap: () => _handleProductivityTrigger(tip),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                tip['label'] as String,
-                                style: const TextStyle(color: AppColors.accent, fontSize: 9, fontWeight: FontWeight.bold),
-                              ),
+                        GestureDetector(
+                          onTap: () => _handleQuickAddReminder(sug),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Add',
+                              style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                );
-              }),
-            ],
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ),
+        
+        // Productivity Tips as a full-width tile below the grid
+        if (_productivityTips.isNotEmpty) ...[
+          const SizedBox(height: AppSizes.s),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
+            child: GlassContainer(
+              customGradient: isDark ? AppColors.bentoDarkCard : null,
+              borderRadius: 20, // Bento tile radius
+              blur: 15,
+              opacity: 1.0,
+              color: Colors.transparent,
+              borderColor: Colors.white24,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline_rounded, size: 14, color: AppColors.accent),
+                      SizedBox(width: 6),
+                      Text(
+                        'Productivity Insight',
+                        style: TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _productivityTips[0]['tip'] as String,
+                    style: TextStyle(
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => _handleProductivityTrigger(_productivityTips[0]),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          _productivityTips[0]['label'] as String,
+                          style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ]
       ],
     );
   }
@@ -527,20 +527,17 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
           children: [
             // Standard Text Bubble
             GlassContainer(
+              customGradient: message.isMe ? AppColors.bentoPurple : (isDark ? AppColors.bentoDarkCard : null),
               blur: 15,
-              opacity: message.isMe
-                  ? (isDark ? 0.15 : 0.22)
-                  : (isDark ? 0.05 : 0.08),
-              color: message.isMe ? AppColors.primary : (isDark ? Colors.black : Colors.white),
-              borderColor: message.isMe
-                  ? AppColors.primary.withValues(alpha: 0.3)
-                  : (isDark ? Colors.white10 : Colors.black12),
+              opacity: 1.0,
+              color: Colors.transparent,
+              borderColor: Colors.white24,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               borderRadius: 16,
               child: Text(
                 message.text,
-                style: TextStyle(
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontSize: 14,
                   height: 1.35,
                 ),
@@ -563,10 +560,11 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
     final categoryColor = _getCategoryColor(parsed.category);
 
     return GlassContainer(
+      customGradient: isDark ? AppColors.bentoDarkCard : null,
       blur: 20,
-      opacity: isDark ? 0.12 : 0.16,
-      color: isDark ? Colors.black : Colors.white,
-      borderColor: isDark ? Colors.white12 : Colors.black12,
+      opacity: 1.0,
+      color: Colors.transparent,
+      borderColor: Colors.white24,
       padding: const EdgeInsets.all(12),
       borderRadius: 16,
       child: Column(
@@ -693,12 +691,13 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.m),
       child: GlassContainer(
+        customGradient: isDark ? AppColors.bentoDarkCard : null,
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.xs),
         borderRadius: 24,
         blur: 15,
-        opacity: isDark ? 0.1 : 0.15,
-        color: isDark ? Colors.black : Colors.white,
-        borderColor: isDark ? Colors.white12 : Colors.black12,
+        opacity: 1.0,
+        color: Colors.transparent,
+        borderColor: Colors.white24,
         child: Row(
           children: [
             Expanded(

@@ -287,11 +287,17 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                             ),
                           ),
                   )
-                : ListView.builder(
+                : GridView.builder(
                     padding: const EdgeInsets.only(
                       left: AppSizes.m,
                       right: AppSizes.m,
                       bottom: 190, // Prevents bottom navigation and ad overlap
+                    ),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppSizes.m,
+                      mainAxisSpacing: AppSizes.m,
+                      childAspectRatio: 0.85,
                     ),
                     itemCount: sortedEvents.isEmpty ? 0 : sortedEvents.length + 1,
                     itemBuilder: (context, index) {
@@ -305,119 +311,115 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                       final icon = event.icon;
                       final countdown = _getCountdownText(event.dateTime);
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: AppSizes.m),
-                        child: GestureDetector(
-                          onTap: () => _showAddReminderDialog(context, event),
-                          child: GlassContainer(
-                            blur: 20,
-                            opacity: isDark ? 0.08 : 0.12,
-                            color: isDark ? Colors.black : Colors.white,
-                            borderColor: isDark ? Colors.white10 : Colors.black12,
-                            padding: const EdgeInsets.all(AppSizes.m),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Event Category Icon Indicator
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: color.withValues(alpha: 0.15),
-                                    border: Border.all(
-                                      color: color.withValues(alpha: 0.3),
-                                      width: 1,
+                      return GestureDetector(
+                        onTap: () => _showAddReminderDialog(context, event),
+                        child: GlassContainer(
+                          customGradient: isDark ? AppColors.bentoDarkCard : null,
+                          borderRadius: 24, // Bento Style
+                          blur: 20,
+                          opacity: 1.0,
+                          color: Colors.transparent,
+                          borderColor: Colors.white24,
+                          padding: const EdgeInsets.all(AppSizes.m),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Event Category Icon Indicator
+                                  Container(
+                                    width: 42,
+                                    height: 42,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: color.withValues(alpha: 0.15),
+                                      border: Border.all(
+                                        color: color.withValues(alpha: 0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      icon,
+                                      color: color,
+                                      size: 20,
                                     ),
                                   ),
-                                  child: Icon(
-                                    icon,
-                                    color: color,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSizes.m),
-                                
-                                // Event texts
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        event.title,
-                                        style: TextStyle(
-                                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                  // Time Countdown Badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _getBadgeColor(countdown).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _getBadgeColor(countdown).withValues(alpha: 0.3),
+                                        width: 1,
                                       ),
-                                      const SizedBox(height: 5),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.calendar_month_rounded,
-                                            size: 12,
-                                            color: isDark ? Colors.white54 : Colors.black54,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _formatDateTime(event.dateTime),
-                                            style: TextStyle(
-                                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
+                                    ),
+                                    child: Text(
+                                      countdown,
+                                      style: TextStyle(
+                                        color: _getBadgeColor(countdown),
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(height: 3),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.location_on_outlined,
-                                            size: 12,
-                                            color: isDark ? Colors.white54 : Colors.black54,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              event.location,
-                                              style: TextStyle(
-                                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                                fontSize: 12,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: AppSizes.s),
- 
-                                // Time Countdown Badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: _getBadgeColor(countdown).withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: _getBadgeColor(countdown).withValues(alpha: 0.3),
-                                      width: 1,
                                     ),
                                   ),
-                                  child: Text(
-                                    countdown,
+                                ],
+                              ),
+                              const Spacer(),
+                              Text(
+                                event.title,
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black87,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_month_rounded,
+                                    size: 12,
+                                    color: isDark ? Colors.white54 : Colors.black54,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${event.dateTime.day}/${event.dateTime.month} - ${event.dateTime.hour.toString().padLeft(2, '0')}:${event.dateTime.minute.toString().padLeft(2, '0')}',
                                     style: TextStyle(
-                                      color: _getBadgeColor(countdown),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                      fontSize: 12,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 12,
+                                    color: isDark ? Colors.white54 : Colors.black54,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      event.location,
+                                      style: TextStyle(
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       );

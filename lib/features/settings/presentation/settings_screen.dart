@@ -49,11 +49,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.xl),
           child: GlassContainer(
+            customGradient: isDark ? AppColors.bentoDarkCard : null,
             blur: 24,
             forceBlur: true,
-            opacity: isDark ? 0.90 : 0.95,
-            color: isDark ? Colors.black : Colors.white,
-            borderColor: isDark ? Colors.white24 : Colors.black12,
+            opacity: 1.0,
+            color: Colors.transparent,
+            borderColor: Colors.white24,
             padding: const EdgeInsets.all(AppSizes.l),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -129,10 +130,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: GlassContainer(
+            customGradient: isDark ? AppColors.bentoDarkCard : null,
             blur: 20,
             forceBlur: true,
-            opacity: isDark ? 0.90 : 0.95,
-            color: isDark ? Colors.black : Colors.white,
+            opacity: 1.0,
+            color: Colors.transparent,
             padding: const EdgeInsets.all(AppSizes.l),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -167,11 +169,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Dialog(
                 backgroundColor: Colors.transparent,
                 child: GlassContainer(
+                  customGradient: isDark ? AppColors.bentoDarkCard : null,
                   blur: 24,
                   forceBlur: true,
-                  opacity: isDark ? 0.90 : 0.95,
-                  color: isDark ? Colors.black : Colors.white,
-                  borderColor: isDark ? Colors.white24 : Colors.black12,
+                  opacity: 1.0,
+                  color: Colors.transparent,
+                  borderColor: Colors.white24,
                   padding: const EdgeInsets.all(AppSizes.l),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -283,11 +286,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             return Dialog(
               backgroundColor: Colors.transparent,
               child: GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
                 blur: 24,
                 forceBlur: true,
-                opacity: isDark ? 0.90 : 0.95,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white24 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.all(AppSizes.l),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -433,10 +437,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // 1. APPEARANCE
               _buildSectionHeader('APPEARANCE & THEME', isDark),
               GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
+                borderRadius: 24, // Bento style
                 blur: 20,
-                opacity: isDark ? 0.08 : 0.12,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white12 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,10 +472,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // 2. NOTIFICATIONS
               _buildSectionHeader('NOTIFICATIONS SETTINGS', isDark),
               GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
+                borderRadius: 24, // Bento style
                 blur: 20,
-                opacity: isDark ? 0.08 : 0.12,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white12 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.symmetric(vertical: AppSizes.s),
                 child: Column(
                   children: [
@@ -531,10 +539,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // 3. ALARM SETTINGS
               _buildSectionHeader('ALARM & HARDWARE', isDark),
               GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
+                borderRadius: 24, // Bento style
                 blur: 20,
-                opacity: isDark ? 0.08 : 0.12,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white12 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,10 +615,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // 5. PRIVACY & ABOUT
               _buildSectionHeader('LEGAL & INFORMATION', isDark),
               GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
+                borderRadius: 24, // Bento style
                 blur: 20,
-                opacity: isDark ? 0.08 : 0.12,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white12 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Column(
                   children: [

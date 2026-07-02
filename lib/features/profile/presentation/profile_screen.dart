@@ -42,11 +42,12 @@ class ProfileScreen extends ConsumerWidget {
             return Dialog(
               backgroundColor: Colors.transparent,
               child: GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
                 blur: 24,
                 forceBlur: true,
-                opacity: isDark ? 0.08 : 0.85,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white10 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.all(AppSizes.l),
                 child: SingleChildScrollView(
                   child: Form(
@@ -349,10 +350,11 @@ class ProfileScreen extends ConsumerWidget {
             GestureDetector(
               onTap: () => _showEditProfileDialog(context, ref, displayName, email, isDark),
               child: GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
                 blur: 20,
-                opacity: isDark ? 0.08 : 0.12,
-                color: isDark ? Colors.black : Colors.white,
-                borderColor: isDark ? Colors.white10 : Colors.black12,
+                opacity: 1.0,
+                color: Colors.transparent,
+                borderColor: Colors.white24,
                 padding: const EdgeInsets.all(AppSizes.l),
                 child: Column(
                   children: [
@@ -407,49 +409,105 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.l),
 
-            // Menu Items List
-            GlassContainer(
-              blur: 15,
-              opacity: isDark ? 0.06 : 0.1,
-              color: isDark ? Colors.black : Colors.white,
-              borderColor: isDark ? Colors.white10 : Colors.black12,
-              padding: EdgeInsets.zero, // Remove inner padding for dense list tiles
-              child: Material(
+            // Bento Options Grid
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => context.push('/settings'),
+                    child: GlassContainer(
+                      customGradient: isDark ? AppColors.bentoDarkCard : null,
+                      borderRadius: 24, // Bento style
+                      blur: 15,
+                      opacity: 1.0,
+                      color: Colors.transparent,
+                      borderColor: Colors.white24,
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.settings_outlined, color: isDark ? Colors.white70 : Colors.black87, size: 32),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.m),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (dialogContext) => HelpSupportDialog(isDark: isDark),
+                      );
+                    },
+                    child: GlassContainer(
+                      customGradient: isDark ? AppColors.bentoDarkCard : null,
+                      borderRadius: 24, // Bento style
+                      blur: 15,
+                      opacity: 1.0,
+                      color: Colors.transparent,
+                      borderColor: Colors.white24,
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.help_outline_rounded, color: isDark ? Colors.white70 : Colors.black87, size: 32),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Help & Support',
+                            style: TextStyle(
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.m),
+            
+            // Log Out Bento Tile
+            GestureDetector(
+              onTap: () async {
+                // Correctly clear remote & local session context
+                await ref.read(authNotifierProvider.notifier).logout();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              },
+              child: GlassContainer(
+                customGradient: isDark ? AppColors.bentoDarkCard : null,
+                borderRadius: 24, // Bento style
+                blur: 15,
+                opacity: 1.0,
                 color: Colors.transparent,
-                child: Column(
+                borderColor: AppColors.error.withValues(alpha: 0.3), // Red border for destructive action
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildProfileTile(
-                      context,
-                      icon: Icons.settings_outlined,
-                      title: 'Settings',
-                      onTap: () => context.push('/settings'),
-                    ),
-                    const Divider(height: 1),
-                    _buildProfileTile(
-                      context,
-                      icon: Icons.help_outline_rounded,
-                      title: 'Help & Support',
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (dialogContext) => HelpSupportDialog(isDark: isDark),
-                        );
-                      },
-                    ),
-                    const Divider(height: 1),
-                    _buildProfileTile(
-                      context,
-                      icon: Icons.logout_rounded,
-                      title: 'Log Out',
-                      iconColor: AppColors.error,
-                      onTap: () async {
-                        // Correctly clear remote & local session context
-                        await ref.read(authNotifierProvider.notifier).logout();
-                        if (context.mounted) {
-                          context.go('/login');
-                        }
-                      },
+                    const Icon(Icons.logout_rounded, color: AppColors.error, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Log Out',
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -458,38 +516,6 @@ class ProfileScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildProfileTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color? iconColor,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: iconColor ?? (isDark ? Colors.white70 : Colors.black87),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios_rounded,
-        size: 14,
-        color: isDark ? Colors.white30 : Colors.black26,
-      ),
-      onTap: onTap,
     );
   }
 }

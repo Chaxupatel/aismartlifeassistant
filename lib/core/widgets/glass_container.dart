@@ -17,6 +17,7 @@ class GlassContainer extends StatelessWidget {
   final double? height;
   final AlignmentGeometry? alignment;
   final bool forceBlur;
+  final Gradient? customGradient;
 
   const GlassContainer({
     super.key,
@@ -32,6 +33,7 @@ class GlassContainer extends StatelessWidget {
     this.height,
     this.alignment,
     this.forceBlur = false, // If true, forces rendering of BackdropFilter (e.g. for floating panels)
+    this.customGradient,
   });
 
   @override
@@ -49,9 +51,9 @@ class GlassContainer extends StatelessWidget {
         Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: color.withOpacity(opacity),
+            color: customGradient == null ? color.withOpacity(opacity) : null,
             borderRadius: BorderRadius.circular(borderRadius),
-            gradient: LinearGradient(
+            gradient: customGradient ?? LinearGradient(
               colors: [
                 color.withOpacity(opacity + (isDark ? 0.05 : 0.15)),
                 color.withOpacity(opacity),

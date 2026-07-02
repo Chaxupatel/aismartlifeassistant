@@ -160,12 +160,13 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
             child: GlassContainer(
+              customGradient: isDark ? AppColors.bentoDarkCard : null,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: AppSizes.xs),
               borderRadius: 12,
-              blur: 10,
-              opacity: isDark ? 0.05 : 0.08,
-              color: isDark ? Colors.black : Colors.white,
-              borderColor: isDark ? Colors.white10 : Colors.black12,
+              blur: 15,
+              opacity: 1.0,
+              color: Colors.transparent,
+              borderColor: Colors.white24,
               child: Row(
                 children: [
                   Icon(
@@ -212,11 +213,17 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                       ),
                     ),
                   )
-                : ListView.builder(
+                : GridView.builder(
                     padding: const EdgeInsets.only(
                       left: AppSizes.m,
                       right: AppSizes.m,
-                      bottom: 190, // Avoid bottom navigation and ad overlap
+                      bottom: 190,
+                    ),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppSizes.m,
+                      mainAxisSpacing: AppSizes.m,
+                      childAspectRatio: 0.85,
                     ),
                     itemCount: _getListItemCount(filteredReminders.length),
                     itemBuilder: (context, index) {
@@ -243,41 +250,40 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                             context.push('/reminders/${reminder.id}');
                           }
                         },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: AppSizes.m),
-                          child: GlassContainer(
-                            blur: 15,
-                            opacity: isDark ? 0.06 : 0.1,
-                            color: isSelected 
-                                ? AppColors.primary.withValues(alpha: 0.15)
-                                : (isDark ? Colors.black : Colors.white),
-                            borderColor: isSelected
-                                ? AppColors.primary.withValues(alpha: 0.5)
-                                : (isDark ? Colors.white10 : Colors.black12),
-                            padding: EdgeInsets.zero,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  right: -10,
-                                  bottom: -15,
-                                  child: Icon(
-                                    _getRecurrenceWatermarkIcon(reminder.repeatType),
-                                    size: 90,
-                                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
-                                  ),
+                        child: GlassContainer(
+                          customGradient: isDark ? AppColors.bentoDarkCard : null,
+                          borderRadius: 24, // Bento style
+                          blur: 15,
+                          opacity: 1.0,
+                          color: isSelected 
+                              ? AppColors.primary.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          borderColor: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.5)
+                              : Colors.white24,
+                          padding: const EdgeInsets.all(AppSizes.m),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: -20,
+                                bottom: -20,
+                                child: Icon(
+                                  _getRecurrenceWatermarkIcon(reminder.repeatType),
+                                  size: 100,
+                                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(AppSizes.m),
-                                  child: Row(
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       _buildRecurrenceLeftDecorator(reminder.repeatType, isDark),
                                       if (_isSelectionMode)
-                                        Padding(
-                                          padding: const EdgeInsets.only(right: AppSizes.m),
-                                          child: Icon(
-                                            isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                                            color: isSelected ? AppColors.primary : (isDark ? Colors.white38 : Colors.black38),
-                                          ),
+                                        Icon(
+                                          isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                                          color: isSelected ? AppColors.primary : (isDark ? Colors.white38 : Colors.black38),
                                         )
                                       else
                                         InkWell(
@@ -292,112 +298,58 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                                             color: reminder.isCompleted ? AppColors.success : AppColors.primary,
                                           ),
                                         ),
-                                      if (!_isSelectionMode)
-                                        const SizedBox(width: AppSizes.m),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    reminder.title,
+                                    style: TextStyle(
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      decoration: reminder.isCompleted ? TextDecoration.lineThrough : null,
+                                      decorationColor: isDark ? Colors.white60 : Colors.black45,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
                                     children: [
+                                      Icon(
+                                        Icons.access_time_rounded,
+                                        size: 12,
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        reminder.title,
+                                        '${reminder.dateTime.hour.toString().padLeft(2, '0')}:${reminder.dateTime.minute.toString().padLeft(2, '0')}',
                                         style: TextStyle(
-                                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          decoration: reminder.isCompleted ? TextDecoration.lineThrough : null,
-                                          decorationColor: isDark ? Colors.white60 : Colors.black45,
+                                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                          fontSize: 12,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.access_time_rounded,
-                                            size: 12,
-                                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${reminder.dateTime.day}/${reminder.dateTime.month}/${reminder.dateTime.year} - ${reminder.dateTime.hour.toString().padLeft(2, '0')}:${reminder.dateTime.minute.toString().padLeft(2, '0')}',
-                                            style: TextStyle(
-                                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          if (reminder.repeatType != 'One Time') ...[
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              _getRecurrenceMicroIcon(reminder.repeatType),
-                                              size: 12,
-                                              color: AppColors.primary,
-                                            ),
-                                            const SizedBox(width: 2),
-                                            Text(
-                                              reminder.repeatType,
-                                              style: const TextStyle(
-                                                color: AppColors.primary,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                          if (reminder.enableNotification || reminder.enableAlarm) ...[
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              reminder.enableAlarm ? Icons.alarm_rounded : Icons.notifications_active_outlined,
-                                              size: 12,
-                                              color: isDark ? Colors.white38 : Colors.black38,
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                        if (!reminder.isCompleted && reminder.dateTime.isAfter(DateTime.now())) ...[
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.timelapse_rounded,
-                                                size: 12,
-                                                color: AppColors.accent,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                _getRemainingTimeText(reminder.dateTime),
-                                                style: const TextStyle(
-                                                  color: AppColors.accent,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
                                     ],
                                   ),
-                                ),
-                                const SizedBox(width: AppSizes.s),
-                                
-                                // Tag Label
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    reminder.category,
-                                    style: const TextStyle(
-                                      color: AppColors.primary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      reminder.category,
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       );

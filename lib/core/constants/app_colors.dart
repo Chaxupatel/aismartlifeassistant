@@ -71,4 +71,35 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Bento Box Vibrant Gradients
+  static const Gradient bentoSunset = LinearGradient(
+    colors: [Color(0xFFFF7A00), Color(0xFFFF004D)], // Sunset Orange to Ruby Red
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const Gradient bentoOcean = LinearGradient(
+    colors: [Color(0xFF00F2FE), Color(0xFF4FACFE)], // Cyan to Bright Blue
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const Gradient bentoPurple = LinearGradient(
+    colors: [Color(0xFFD4145A), Color(0xFFFBB03B)], // Vibrant Pink to Orange (wait, let's use Purple)
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const Gradient bentoAmethyst = LinearGradient(
+    colors: [Color(0xFF9D50BB), Color(0xFF6E48AA)], // Soft Purple
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const Gradient bentoDarkCard = LinearGradient(
+    colors: [Color(0xFF2A2D3E), Color(0xFF1F212D)], // Matte Dark Blue-Grey
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }

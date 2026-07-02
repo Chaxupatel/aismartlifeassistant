@@ -9,7 +9,7 @@ export 'dark_theme.dart';
 /// Notifier class to manage the active theme mode state.
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
-  ThemeMode build() => ThemeMode.system;
+  ThemeMode build() => ThemeMode.dark;
 
   void setThemeMode(ThemeMode mode) {
     state = mode;

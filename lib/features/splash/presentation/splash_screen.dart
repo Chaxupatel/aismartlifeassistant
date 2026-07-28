@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_ad_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -171,7 +172,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
   Widget build(BuildContext context) {
     // Trigger preloading of the global adaptive banner ad early so it is fully loaded
     // and ready to display immediately when the user reaches the Home screen dashboard.
-    ref.read(globalAdProvider.notifier).preloadAd(context);
+        if (adsEnabled) {
+          ref.read(globalAdProvider.notifier).preloadAd(context);
+        }
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;

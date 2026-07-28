@@ -11,6 +11,7 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
+import 'core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 import 'core/services/app_open_ad_manager.dart';
 import 'core/services/interstitial_ad_manager.dart';
@@ -52,12 +53,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   Future<void> _initApp() async {
     try {
       // Initialize independent services in parallel to speed up app boot time dramatically
-      await Future.wait([
-        MobileAds.instance.initialize().then((_) {
-          AppOpenAdManager.instance.initializeLifecycleListener();
-          AppOpenAdManager.instance.loadAd();
-          InterstitialAdManager.instance.loadAd(); // Preload Interstitial on startup
-        }),
+      final List<Future<dynamic>> initTasks = [
         Hive.initFlutter().then((_) => Future.wait([
           Hive.openBox<Map>('reminders_box'),
           Hive.openBox('settings_box'),
@@ -93,7 +89,20 @@ class _MyAppState extends ConsumerState<MyApp> {
           await service.init();
           await service.requestPermissions();
         }),
-      ]);
+      ];
+
+      // Initialize ads in parallel only when enabled
+      if (adsEnabled) {
+        initTasks.add(
+          MobileAds.instance.initialize().then((_) {
+            AppOpenAdManager.instance.initializeLifecycleListener();
+            AppOpenAdManager.instance.loadAd();
+            InterstitialAdManager.instance.loadAd(); // Preload Interstitial on startup
+          }),
+        );
+      }
+
+      await Future.wait(initTasks);
 
       // Listen for alarms ringing
       Alarm.ringStream.stream.listen((alarmSettings) {

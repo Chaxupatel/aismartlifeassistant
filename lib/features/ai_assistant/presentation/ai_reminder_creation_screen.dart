@@ -11,6 +11,7 @@ import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/rule_based_parser.dart';
 import '../../../core/services/interstitial_ad_manager.dart';
+import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 class AIReminderCreationScreen extends ConsumerStatefulWidget {
   const AIReminderCreationScreen({super.key});
@@ -184,14 +185,22 @@ class _AIReminderCreationScreenState extends ConsumerState<AIReminderCreationScr
       ),
     );
 
-    InterstitialAdManager.instance.checkAndShowAd(
-      context,
-      onComplete: () {
-        if (mounted) {
-          context.pop();
-        }
-      },
-    );
+// Show interstitial ad only if ads are enabled
+if (adsEnabled) {
+  InterstitialAdManager.instance.checkAndShowAd(
+    context,
+    onComplete: () {
+      if (mounted) {
+        context.pop();
+      }
+    },
+  );
+} else {
+  // Direct navigation when ads are disabled
+  if (mounted) {
+    context.pop();
+  }
+}
   }
 
   Color _getCategoryColor(String cat) {

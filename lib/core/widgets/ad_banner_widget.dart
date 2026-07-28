@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import '../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 // Google's official Test Ad Unit IDs for Adaptive Banners with Remote Config integration
 String get _globalAdUnitId {

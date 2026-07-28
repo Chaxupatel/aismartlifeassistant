@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/ad_banner_widget.dart';
+import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 /// Navigation shell wrapper using [StatefulNavigationShell] from go_router.
 /// Upgraded to render a floating, capsule-shaped glass navigation bar with
@@ -88,7 +89,7 @@ class MainNavigationShell extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const AdBannerWidget(),
+          if (adsEnabled) const AdBannerWidget(),
                 ],
               ),
             ),

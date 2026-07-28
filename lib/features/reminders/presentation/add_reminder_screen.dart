@@ -10,6 +10,7 @@ import '../../../core/widgets/gradient_background.dart';
 import '../domain/reminder.dart';
 import 'providers/reminders_provider.dart';
 import '../../../core/services/interstitial_ad_manager.dart';
+import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 /// Screen to create a new task reminder.
 class AddReminderScreen extends ConsumerStatefulWidget {
@@ -132,14 +133,21 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
         ),
       );
 
-      InterstitialAdManager.instance.checkAndShowAd(
-        context,
-        onComplete: () {
+        if (adsEnabled) {
+          InterstitialAdManager.instance.checkAndShowAd(
+            context,
+            onComplete: () {
+              if (mounted) {
+                context.pop();
+              }
+            },
+          );
+        } else {
+          // Directly navigate back without showing an ad
           if (mounted) {
             context.pop();
           }
-        },
-      );
+        }
     }
   }
 

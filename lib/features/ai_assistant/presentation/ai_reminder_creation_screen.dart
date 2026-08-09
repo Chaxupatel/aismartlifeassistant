@@ -12,6 +12,8 @@ import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/rule_based_parser.dart';
 import '../../../core/services/interstitial_ad_manager.dart';
 import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
+import '../../../core/services/connectivity_service.dart';
+import '../../../core/widgets/no_connection_dialog.dart';
 
 class AIReminderCreationScreen extends ConsumerStatefulWidget {
   const AIReminderCreationScreen({super.key});
@@ -51,6 +53,20 @@ class _AIReminderCreationScreenState extends ConsumerState<AIReminderCreationScr
   void initState() {
     super.initState();
     _inputController.addListener(_onInputChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkInitialConnection());
+  }
+
+  Future<void> _checkInitialConnection() async {
+    final isOffline = await ConnectivityService.instance.isOffline();
+    if (isOffline && mounted) {
+      final connected = await NoConnectionDialog.show(
+        context,
+        message: 'An active internet connection is required to use AI Reminder Creation. Please turn on your network.',
+      );
+      if (connected != true && mounted) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   @override

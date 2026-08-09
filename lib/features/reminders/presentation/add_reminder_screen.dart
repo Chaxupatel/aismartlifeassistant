@@ -11,6 +11,8 @@ import '../domain/reminder.dart';
 import 'providers/reminders_provider.dart';
 import '../../../core/services/interstitial_ad_manager.dart';
 import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
+import '../../../core/services/connectivity_service.dart';
+import '../../../core/widgets/no_connection_dialog.dart';
 
 /// Screen to create a new task reminder.
 class AddReminderScreen extends ConsumerStatefulWidget {
@@ -98,8 +100,18 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
     }
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
+      final isOffline = await ConnectivityService.instance.isOffline();
+      if (!mounted) return;
+      if (isOffline) {
+        await NoConnectionDialog.show(
+          context,
+          message: 'An active internet connection is required to create and schedule reminders. Please turn on your network.',
+        );
+        return;
+      }
+
       final title = _titleController.text;
       final notes = _descController.text;
       final finalDateTime = DateTime(

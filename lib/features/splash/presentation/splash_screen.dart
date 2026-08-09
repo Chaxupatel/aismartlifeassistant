@@ -9,6 +9,9 @@ import '../../../core/widgets/gradient_background.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../core/widgets/ad_banner_widget.dart';
 import '../../../core/services/app_open_ad_manager.dart';
+import '../../../core/services/connectivity_service.dart';
+import '../../../core/widgets/no_connection_dialog.dart';
+import '../../../core/services/remote_config_service.dart';
 import '../../../main.dart';
 
 /// An upgraded, premium splash screen displaying application branding.
@@ -85,6 +88,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
   Future<void> _exitSplashSequence() async {
     final startTime = DateTime.now();
 
+    // Check connectivity on launch
+    bool isOffline = await ConnectivityService.instance.isOffline();
+    while (isOffline && mounted) {
+      final connected = await NoConnectionDialog.show(
+        context,
+        message: 'An active internet connection is required to launch Remindly and synchronize configurations.',
+      );
+      if (connected == true) {
+        isOffline = false;
+        // Re-initialize Remote Config to fetch live config parameters (like ads_enabled: true)
+        await ref.read(remoteConfigServiceProvider).initialize();
+        break;
+      } else {
+        // User tapped the close 'X' button, allow them to proceed offline
+        break;
+      }
+    }
+
+    if (!mounted) return;
+
     // 1. Wait for background initialization tasks in main.dart to complete
     try {
       await appInitializationCompleter.future;
@@ -92,8 +115,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
       debugPrint('Initialization error awaited during splash: $e');
     }
 
-    // 2. Start preloading the App Open Ad immediately
-    AppOpenAdManager.instance.loadAd();
+    // 2. Start preloading the App Open Ad immediately if enabled
+    if (adsEnabled) {
+      AppOpenAdManager.instance.loadAd();
+    }
 
     // 3. Ensure the premium logo and shine entrance animations play for at least 2600ms
     final elapsedTime = DateTime.now().difference(startTime).inMilliseconds;
@@ -101,7 +126,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
     if (remainingTime > 0) {
       await Future.delayed(Duration(milliseconds: remainingTime));
     }
-    if (!mounted) return;
+    if (!adsEnabled) {
+      _proceedToNextScreen();
+      return;
+    }
 
     // 4. Check if the App Open ad has already finished loading
     if (AppOpenAdManager.instance.isAdAvailable) {

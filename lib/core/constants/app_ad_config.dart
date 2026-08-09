@@ -1,1 +1,1 @@
-const bool adsEnabled = false;
+bool adsEnabled = false;

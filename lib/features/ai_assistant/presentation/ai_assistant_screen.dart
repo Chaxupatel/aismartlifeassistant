@@ -8,6 +8,8 @@ import '../../../core/widgets/gradient_background.dart';
 import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/rule_based_parser.dart';
+import '../../../core/services/connectivity_service.dart';
+import '../../../core/widgets/no_connection_dialog.dart';
 
 class ChatMessage {
   final String text;
@@ -107,6 +109,20 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
         isMe: false,
       ),
     ]);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkInitialConnection());
+  }
+
+  Future<void> _checkInitialConnection() async {
+    final isOffline = await ConnectivityService.instance.isOffline();
+    if (isOffline && mounted) {
+      final connected = await NoConnectionDialog.show(
+        context,
+        message: 'An active internet connection is required to talk to the AI Assistant. Please turn on your network.',
+      );
+      if (connected != true && mounted) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   @override
@@ -217,9 +233,18 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
 
   // --- SEND CHAT ACTION ---
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+
+    final isOffline = await ConnectivityService.instance.isOffline();
+    if (isOffline && mounted) {
+      await NoConnectionDialog.show(
+        context,
+        message: 'An active internet connection is required to interact with the AI Assistant. Please turn on your network.',
+      );
+      return;
+    }
 
     setState(() {
       _messages.add(ChatMessage(text: text, isMe: true));

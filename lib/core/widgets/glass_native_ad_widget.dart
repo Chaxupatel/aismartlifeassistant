@@ -3,6 +3,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'glass_container.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_ad_config.dart';
 
 /// A premium, glassmorphic Native Ad widget that uses AdMob Native Templates.
 /// Auto-styles elements to integrate seamlessly with the app's dark/light glass aesthetic.
@@ -44,7 +45,9 @@ class _GlassNativeAdWidgetState extends State<GlassNativeAdWidget> {
   @override
   void initState() {
     super.initState();
-    _loadAd();
+    if (adsEnabled) {
+      _loadAd();
+    }
   }
 
   void _loadAd() {
@@ -58,15 +61,15 @@ class _GlassNativeAdWidgetState extends State<GlassNativeAdWidget> {
       debugPrint('Error loading ad_unit_native from Remote Config: $e');
     }
 
-    
     _nativeAd = NativeAd(
       adUnitId: adUnitId,
+      factoryId: 'adFactory',
+      request: const AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           if (mounted) {
             setState(() {
               _isAdLoaded = true;
-              _isAdFailed = false;
             });
           }
         },
@@ -80,7 +83,6 @@ class _GlassNativeAdWidgetState extends State<GlassNativeAdWidget> {
           ad.dispose();
         },
       ),
-      request: const AdRequest(),
       nativeTemplateStyle: NativeTemplateStyle(
         templateType: widget.templateType,
         mainBackgroundColor: Colors.transparent, // Let our GlassContainer draw the background
@@ -112,6 +114,9 @@ class _GlassNativeAdWidgetState extends State<GlassNativeAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (!adsEnabled) {
+      return const SizedBox.shrink();
+    }
     // If ad failed, collapse space
     if (_isAdFailed) {
       return const SizedBox.shrink();

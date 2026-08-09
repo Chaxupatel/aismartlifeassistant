@@ -11,6 +11,7 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
+import 'package:home_widget/home_widget.dart';
 import 'core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 import 'core/services/app_open_ad_manager.dart';
@@ -108,6 +109,18 @@ class _MyAppState extends ConsumerState<MyApp> {
       Alarm.ringStream.stream.listen((alarmSettings) {
         // Navigate to alarm ring screen when alarm triggers
         ref.read(appRouterProvider).push('/alarm-ring', extra: alarmSettings);
+      });
+
+      // Listen to HomeWidget deep links (Quick Action taps)
+      HomeWidget.widgetClicked.listen((Uri? uri) {
+        if (uri != null) {
+          final targetStr = '${uri.host}${uri.path}';
+          if (targetStr.contains('add')) {
+            ref.read(appRouterProvider).push('/reminders/add');
+          } else if (targetStr.contains('ai')) {
+            ref.read(appRouterProvider).push('/ai');
+          }
+        }
       });
 
       isAppInitialized = true;

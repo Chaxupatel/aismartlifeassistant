@@ -75,6 +75,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     debugLogDiagnostics: true,
+    redirect: (context, state) {
+      final uri = state.uri;
+      if (uri.scheme == 'remindly') {
+        final target = '${uri.host}${uri.path}';
+        if (target.contains('add')) {
+          return '/reminders/add';
+        } else if (target.contains('ai')) {
+          return '/ai-assistant';
+        } else if (target.contains('calendar')) {
+          return '/calendar';
+        } else {
+          return '/home';
+        }
+      }
+      return null;
+    },
     observers: [
       lazyAnalyticsObserver,
     ],

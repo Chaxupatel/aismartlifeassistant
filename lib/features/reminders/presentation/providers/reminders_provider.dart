@@ -4,6 +4,8 @@ import '../../data/reminder_repository.dart';
 import 'package:ai_smart_life_assistant/core/services/notification_service.dart';
 import 'package:ai_smart_life_assistant/features/auth/presentation/providers/auth_provider.dart';
 
+import 'package:ai_smart_life_assistant/core/services/home_widget_service.dart';
+
 /// Provider exposing the [ReminderRepository] implementation.
 final reminderRepositoryProvider = Provider<ReminderRepository>((ref) {
   return SyncedReminderRepository();
@@ -42,6 +44,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
       state = list;
     }
     _notificationService.scheduleDailyBriefings();
+    HomeWidgetService.instance.updateWidgets(state);
   }
 
   void addReminder(Reminder reminder) {
@@ -50,6 +53,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     _repository.addReminder(updated);
     _notificationService.scheduleNotification(updated);
     _notificationService.scheduleDailyBriefings();
+    HomeWidgetService.instance.updateWidgets(state);
   }
 
   void toggleReminder(String id) {
@@ -80,6 +84,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
       _notificationService.scheduleNotification(updated);
     }
     _notificationService.scheduleDailyBriefings();
+    HomeWidgetService.instance.updateWidgets(state);
   }
 
   void updateReminder(Reminder updated) {
@@ -91,6 +96,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     _repository.addReminder(updatedWithTime);
     _notificationService.scheduleNotification(updatedWithTime);
     _notificationService.scheduleDailyBriefings();
+    HomeWidgetService.instance.updateWidgets(state);
   }
 
   void deleteReminder(String id) {
@@ -98,6 +104,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
     _repository.deleteReminder(id);
     _notificationService.cancelNotification(id);
     _notificationService.scheduleDailyBriefings();
+    HomeWidgetService.instance.updateWidgets(state);
   }
 
   void deleteMultipleReminders(List<String> ids) {
@@ -107,6 +114,7 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
       _notificationService.cancelNotification(id);
     }
     _notificationService.scheduleDailyBriefings();
+    HomeWidgetService.instance.updateWidgets(state);
   }
 }
 

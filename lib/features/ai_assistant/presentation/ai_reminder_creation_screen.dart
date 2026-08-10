@@ -14,6 +14,8 @@ import '../../../core/services/interstitial_ad_manager.dart';
 import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/no_connection_dialog.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../../core/widgets/no_notification_permission_dialog.dart';
 
 class AIReminderCreationScreen extends ConsumerStatefulWidget {
   const AIReminderCreationScreen({super.key});
@@ -162,7 +164,15 @@ class _AIReminderCreationScreenState extends ConsumerState<AIReminderCreationScr
     }
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
+    // Check notification permissions
+    final status = await Permission.notification.status;
+    if (!mounted) return;
+    if (!status.isGranted) {
+      await NoNotificationPermissionDialog.show(context);
+      return;
+    }
+
     final title = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
         : _parsedTitle;

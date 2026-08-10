@@ -10,6 +10,8 @@ import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../domain/rule_based_parser.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/no_connection_dialog.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../../core/widgets/no_notification_permission_dialog.dart';
 
 class ChatMessage {
   final String text;
@@ -146,7 +148,14 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
 
   // --- ACTIONS ---
 
-  void _handleQuickAddReminder(Map<String, dynamic> sug) {
+  Future<void> _handleQuickAddReminder(Map<String, dynamic> sug) async {
+    final status = await Permission.notification.status;
+    if (!mounted) return;
+    if (!status.isGranted) {
+      await NoNotificationPermissionDialog.show(context);
+      return;
+    }
+
     final now = DateTime.now();
     var reminderDate = DateTime(now.year, now.month, now.day, sug['hour'] as int, sug['minute'] as int);
     
@@ -176,7 +185,14 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
     );
   }
 
-  void _handleProductivityTrigger(Map<String, dynamic> tip) {
+  Future<void> _handleProductivityTrigger(Map<String, dynamic> tip) async {
+    final status = await Permission.notification.status;
+    if (!mounted) return;
+    if (!status.isGranted) {
+      await NoNotificationPermissionDialog.show(context);
+      return;
+    }
+
     final now = DateTime.now();
     // Schedule focus block 5 mins from now
     final startTime = now.add(const Duration(minutes: 5));
@@ -202,9 +218,16 @@ class _AIAssistantScreenState extends ConsumerState<AIAssistantScreen> {
     );
   }
 
-  void _handleConfirmConversationReminder(ChatMessage msg) {
+  Future<void> _handleConfirmConversationReminder(ChatMessage msg) async {
     final parsed = msg.parsedReminder;
     if (parsed == null || msg.isScheduled) return;
+
+    final status = await Permission.notification.status;
+    if (!mounted) return;
+    if (!status.isGranted) {
+      await NoNotificationPermissionDialog.show(context);
+      return;
+    }
 
     final reminder = Reminder(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

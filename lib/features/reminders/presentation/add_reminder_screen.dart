@@ -13,6 +13,8 @@ import '../../../core/services/interstitial_ad_manager.dart';
 import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/no_connection_dialog.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../../core/widgets/no_notification_permission_dialog.dart';
 
 /// Screen to create a new task reminder.
 class AddReminderScreen extends ConsumerStatefulWidget {
@@ -102,6 +104,7 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
 
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
+      // 1. Check network connection
       final isOffline = await ConnectivityService.instance.isOffline();
       if (!mounted) return;
       if (isOffline) {
@@ -109,6 +112,14 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
           context,
           message: 'An active internet connection is required to create and schedule reminders. Please turn on your network.',
         );
+        return;
+      }
+
+      // 2. Check notification permissions
+      final status = await Permission.notification.status;
+      if (!mounted) return;
+      if (!status.isGranted) {
+        await NoNotificationPermissionDialog.show(context);
         return;
       }
 

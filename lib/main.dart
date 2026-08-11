@@ -68,6 +68,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
           // Initialize Remote Config values dynamically
           await ref.read(remoteConfigServiceProvider).initialize();
+          ref.read(adsEnabledProvider.notifier).state = RemoteConfigService.instance.showAds;
 
           if (!kIsWeb) {
             // Pass all uncaught "fatal" errors from the framework to Crashlytics
@@ -89,19 +90,20 @@ class _MyAppState extends ConsumerState<MyApp> {
           final service = NotificationService();
           await service.init();
           await service.requestPermissions();
+
+          // Initialize AdMob here after Remote Config is fully initialized and loaded
+          if (adsEnabled) {
+            try {
+              await MobileAds.instance.initialize();
+              AppOpenAdManager.instance.initializeLifecycleListener();
+              await AppOpenAdManager.instance.loadAd();
+              InterstitialAdManager.instance.loadAd(); // Preload Interstitial on startup
+            } catch (e) {
+              debugPrint('Error initializing MobileAds on launch: $e');
+            }
+          }
         }),
       ];
-
-      // Initialize ads in parallel only when enabled
-      if (adsEnabled) {
-        initTasks.add(
-          MobileAds.instance.initialize().then((_) {
-            AppOpenAdManager.instance.initializeLifecycleListener();
-            AppOpenAdManager.instance.loadAd();
-            InterstitialAdManager.instance.loadAd(); // Preload Interstitial on startup
-          }),
-        );
-      }
 
       await Future.wait(initTasks);
 

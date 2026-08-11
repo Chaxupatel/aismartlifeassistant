@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'remote_config_service.dart';
 
 /// Class managing the Interstitial Ad lifecycle and displaying it after reminder creation thresholds.
 class InterstitialAdManager {
@@ -18,7 +18,7 @@ class InterstitialAdManager {
   String get _adUnitId {
     if (kIsWeb) return '';
     try {
-      final String id = FirebaseRemoteConfig.instance.getString('ad_unit_interstitial');
+      final String id = RemoteConfigService.instance.adUnitInterstitial;
       if (id.isNotEmpty) return id;
     } catch (e) {
       debugPrint('Error loading ad_unit_interstitial from Remote Config: $e');
@@ -28,14 +28,14 @@ class InterstitialAdManager {
         : 'ca-app-pub-3940256099942544/4411468910'; // Test iOS Interstitial ID
   }
 
-  /// Get creation interval threshold from Remote Config (defaults to 5)
+  /// Get creation interval threshold from Remote Config (defaults to 3)
   int get _adInterval {
     try {
-      final val = FirebaseRemoteConfig.instance.getInt('interstitial_ad_interval');
-      return val > 0 ? val : 5;
+      final val = RemoteConfigService.instance.interstitialAdInterval;
+      return val > 0 ? val : 3;
     } catch (e) {
       debugPrint('Error loading interstitial_ad_interval from Remote Config: $e');
-      return 5;
+      return 3;
     }
   }
 

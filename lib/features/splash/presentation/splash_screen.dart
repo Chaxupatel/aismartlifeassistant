@@ -99,6 +99,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with TickerProvider
         isOffline = false;
         // Re-initialize Remote Config to fetch live config parameters (like ads_enabled: true)
         await ref.read(remoteConfigServiceProvider).initialize();
+        ref.read(adsEnabledProvider.notifier).state = RemoteConfigService.instance.showAds;
         break;
       } else {
         // User tapped the close 'X' button, allow them to proceed offline

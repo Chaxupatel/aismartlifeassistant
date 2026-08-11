@@ -3,14 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
+import '../services/remote_config_service.dart';
 import '../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 // Google's official Test Ad Unit IDs for Adaptive Banners with Remote Config integration
 String get _globalAdUnitId {
   if (kIsWeb) return '';
   try {
-    final String id = FirebaseRemoteConfig.instance.getString('ad_unit_banner');
+    final String id = RemoteConfigService.instance.adUnitBanner;
     if (id.isNotEmpty) return id;
   } catch (e) {
     debugPrint('Error loading ad_unit_banner from Remote Config: $e');

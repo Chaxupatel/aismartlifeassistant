@@ -7,9 +7,12 @@ import '../../../core/widgets/ad_banner_widget.dart';
 import '../../../core/constants/app_ad_config.dart'; // Import adsEnabled flag
 
 /// Navigation shell wrapper using [StatefulNavigationShell] from go_router.
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Navigation shell wrapper using [StatefulNavigationShell] from go_router.
 /// Upgraded to render a floating, capsule-shaped glass navigation bar with
 /// micro-animations (active tab scaling and glowing indicator bars).
-class MainNavigationShell extends StatelessWidget {
+class MainNavigationShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainNavigationShell({super.key, required this.navigationShell});
@@ -22,7 +25,7 @@ class MainNavigationShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -89,7 +92,7 @@ class MainNavigationShell extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-          if (adsEnabled) const AdBannerWidget(),
+                  if (ref.watch(adsEnabledProvider)) const AdBannerWidget(),
                 ],
               ),
             ),

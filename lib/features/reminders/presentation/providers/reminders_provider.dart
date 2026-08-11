@@ -53,14 +53,6 @@ class RemindersNotifier extends Notifier<List<Reminder>> {
   }
 
   void toggleReminder(String id) {
-    final target = state.firstWhere((r) => r.id == id, orElse: () => state.first);
-    
-    // Auto-remove completed 'One Time' reminders
-    if (!target.isCompleted && target.repeatType == 'One Time') {
-      deleteReminder(id);
-      return;
-    }
-
     state = [
       for (final r in state)
         if (r.id == id)

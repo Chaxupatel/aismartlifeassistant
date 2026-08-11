@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
+import '../services/remote_config_service.dart';
 import 'glass_container.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_ad_config.dart';
@@ -25,7 +25,7 @@ class GlassNativeAdWidget extends StatefulWidget {
     );
   }
 
-  /// Factory for a medium inline native ad (best for home/dashboard layouts)
+  /// Factory for a medium native ad (best for detail/success screens)
   factory GlassNativeAdWidget.medium() {
     return const GlassNativeAdWidget(
       templateType: TemplateType.medium,
@@ -53,7 +53,7 @@ class _GlassNativeAdWidgetState extends State<GlassNativeAdWidget> {
   void _loadAd() {
     String adUnitId = 'ca-app-pub-3940256099942544/2247696110';
     try {
-      final String remoteId = FirebaseRemoteConfig.instance.getString('ad_unit_native');
+      final String remoteId = RemoteConfigService.instance.adUnitNative;
       if (remoteId.isNotEmpty) {
         adUnitId = remoteId;
       }

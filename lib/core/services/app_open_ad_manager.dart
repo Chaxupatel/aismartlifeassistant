@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'remote_config_service.dart';
 
 /// Class managing the App Open Ad lifecycle and displaying it on app foregrounding.
 class AppOpenAdManager {
@@ -13,7 +13,7 @@ class AppOpenAdManager {
   String get _adUnitId {
     if (kIsWeb) return '';
     try {
-      final String id = FirebaseRemoteConfig.instance.getString('ad_unit_app_open');
+      final String id = RemoteConfigService.instance.adUnitAppOpen;
       if (id.isNotEmpty) return id;
     } catch (e) {
       debugPrint('Error loading ad_unit_app_open from Remote Config: $e');
@@ -32,7 +32,7 @@ class AppOpenAdManager {
   /// Fetch cooldown duration from Remote Config with local fallback
   int get _cooldownSeconds {
     try {
-      return FirebaseRemoteConfig.instance.getInt('app_open_ad_cooldown_seconds');
+      return RemoteConfigService.instance.appOpenAdCooldownSeconds;
     } catch (e) {
       debugPrint('Error reading open ad cooldown from Remote Config: $e');
       return 120; // fallback to 120 seconds

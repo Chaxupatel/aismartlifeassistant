@@ -11,6 +11,7 @@ import '../../reminders/domain/reminder.dart';
 import '../../reminders/presentation/providers/reminders_provider.dart';
 import '../../events/presentation/providers/events_provider.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// The responsive and state-connected main Home Dashboard screen of the application.
 class HomeScreen extends ConsumerStatefulWidget {
@@ -20,18 +21,43 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   final _quickAddFormKey = GlobalKey<FormState>();
   final _quickAddController = TextEditingController();
   String _selectedCategory = 'General';
   TimeOfDay _selectedTime = const TimeOfDay(hour: 12, minute: 0);
 
   final List<String> _categories = ['General', 'Work', 'Health', 'Personal'];
+  bool _isNotificationPermissionGranted = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkNotificationPermission();
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _quickAddController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationPermission();
+    }
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    final status = await Permission.notification.status;
+    if (mounted) {
+      setState(() {
+        _isNotificationPermissionGranted = status.isGranted;
+      });
+    }
   }
 
   void _handleQuickAdd(DateTime selectedDate) {
@@ -165,6 +191,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 headerWidget,
                 const SizedBox(height: AppSizes.l),
+                if (!_isNotificationPermissionGranted) ...[
+                  _buildNotificationWarningBanner(isDark),
+                  const SizedBox(height: AppSizes.l),
+                ],
 
                 if (isWide) ...[
                   // Grid/Row layout for Wide screen sizes (Tablets, Desktops)
@@ -1016,6 +1046,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildNotificationWarningBanner(bool isDark) {
+    return GlassContainer(
+      borderRadius: 16,
+      blur: 15,
+      opacity: isDark ? 0.08 : 0.12,
+      color: isDark ? Colors.black : Colors.white,
+      borderColor: AppColors.error.withOpacity(0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.error.withOpacity(0.12),
+            ),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.error,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Alerts & Notifications are Disabled',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Alarms and notifications are turned off. You will not receive any reminder alerts.',
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () async {
+              await openAppSettings();
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.error.withOpacity(0.15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            ),
+            child: const Text(
+              'Enable',
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

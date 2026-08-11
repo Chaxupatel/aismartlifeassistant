@@ -12,6 +12,7 @@ import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:alarm/alarm.dart';
 import 'core/constants/app_ad_config.dart'; // Import adsEnabled flag
+import 'package:permission_handler/permission_handler.dart';
 
 import 'core/services/app_open_ad_manager.dart';
 import 'core/services/interstitial_ad_manager.dart';
@@ -105,7 +106,13 @@ class _MyAppState extends ConsumerState<MyApp> {
       await Future.wait(initTasks);
 
       // Listen for alarms ringing
-      Alarm.ringStream.stream.listen((alarmSettings) {
+      Alarm.ringStream.stream.listen((alarmSettings) async {
+        final status = await Permission.notification.status;
+        if (!status.isGranted) {
+          // Auto-silence if notification permission is revoked to avoid ringing with no controls
+          await Alarm.stop(alarmSettings.id);
+          return;
+        }
         // Navigate to alarm ring screen when alarm triggers
         ref.read(appRouterProvider).push('/alarm-ring', extra: alarmSettings);
       });
